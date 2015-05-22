@@ -1,0 +1,5 @@
+(:name haskell-flycheck
+       :description "Flychecker using the GHCi process"
+       :type http
+       :url "https://raw.githubusercontent.com/chrisdone/haskell-flycheck/master/haskell-flycheck.el"
+       (require 'haskell-flycheck))

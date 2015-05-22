@@ -1,0 +1,4 @@
+(:name groovy-mode
+       :description "Groovy mode for Emacs"
+       :type github
+       :pkgname "Groovy-Emacs-Modes/groovy-emacs-modes")

@@ -1,0 +1,5 @@
+(:name k3-mode
+       :description "Major mode for the K Framework"
+       :type http
+       :url "https://raw.githubusercontent.com/taktoa/k-editor-support/master/emacs/k3-mode.el"
+       :prepare (autoload 'k3-mode "k3-mode.el" "K Framework major mode" t))

@@ -1,0 +1,7 @@
+(:name malabar-mode
+       :description "Emacs integration with the JVM"
+       :type github
+       :branch "master"
+       :pkgname "m0smith/malabar-mode"
+       :load-path ("src/main/lisp" "src/main/pom")
+       :depends (fringe-helper groovy-mode cedet))

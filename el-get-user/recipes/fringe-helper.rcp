@@ -1,0 +1,4 @@
+(:name fringe-helper
+       :description "Helper functions for Emacs fringe bitmaps"
+       :type github
+       :pkgname "nschum/fringe-helper.el")
