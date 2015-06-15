@@ -36,6 +36,7 @@
     ace-jump-mode
     flycheck
     flycheck-haskell
+    flycheck-pmd
     ;; haskell-flycheck
     flyspell
     magit
@@ -56,7 +57,11 @@
     rudel
     ledger-mode
     multi-term
-    purescript-mode))
+    fill-column-indicator
+    scala-mode
+    purescript-mode
+    tuareg
+    org-trello))
 
 ;; install new packages and init already installed packages
 (el-get 'sync my-packages)
@@ -64,21 +69,26 @@
 ;; remove all packages not listed
 (el-get-cleanup my-packages)
 
-(require 'cedet-remove-builtin)
+;;(require 'cedet-remove-builtin)
 
 ;;(require 'k3-mode)
 
 ;;(require 'haskell-flycheck)
 
-(require 'cedet-devel-load)
-(require 'ede/generic)
-(require 'ede/java-root)
-(require 'ede/jvm-base)
-(require 'ede/maven2)
-(require 'semantic/ia)
-(require 'semantic/db-javap)
-(semantic-mode 1)
-(global-ede-mode t)
+;;(require 'cedet-devel-load)
+;;(require 'ede/generic)
+;;(require 'ede/java-root)
+;;(require 'ede/jvm-base)
+;;(require 'ede/maven2)
+;;(require 'semantic/ia)
+;;(require 'semantic/db-javap)
+;;(semantic-mode 1)
+;;(global-ede-mode t)
+
+;;(global-set-key (kbd "S-C-<left>") 'shrink-window-horizontally)
+;;(global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
+;;(global-set-key (kbd "S-C-<down>") 'shrink-window)
+;;(global-set-key (kbd "S-C-<up>") 'enlarge-window)
 
 ;; on to the visual settings
 (setq inhibit-splash-screen t)          ; no splash screen, thanks
@@ -89,7 +99,8 @@
 (scroll-bar-mode -1)                    ; no scroll bars
 (menu-bar-mode -1)
 
-(setq default-frame-alist '((font . "Inconsolata-12")))
+(setq default-frame-alist '((font . "Inconsolata-10")))
+;;(setq default-frame-alist '((font . "Inconsolata-dz for Powerline-12")))
 
 (global-hl-line-mode)                   ; highlight current line
 (global-linum-mode 1)                   ; add line numbers on the left
@@ -102,6 +113,7 @@
 (add-hook 'term-mode-hook                linum-disable)
 (add-hook 'multi-term-mode-hook          linum-disable)
 (add-hook 'haskell-interactive-mode-hook linum-disable)
+(add-hook 'java-mode-hook (lambda () (interactive) (flycheck-select-checker 'java-pmd)))
 
 (cua-mode)
 
@@ -112,6 +124,15 @@
 (setq windmove-wrap-around t)
 
 (setq x-select-enable-clipboard t)
+
+(defun revert-all-buffers ()
+  "Refreshes all open buffers from their respective files."
+  (interactive)
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (and (buffer-file-name) (file-exists-p (buffer-file-name)) (not (buffer-modified-p)))
+        (revert-buffer t t t) )))
+  (message "Refreshed open files.") )
 
 (require 'term)
 (define-key term-raw-map  (kbd "C-'") 'term-line-mode)
@@ -159,6 +180,12 @@
 (require 'smartparens-config)
 (smartparens-global-mode)
 
+(defun conditionally-enable-paredit-mode ()
+  "Enable `paredit-mode' in the minibuffer, during `eval-expression'."
+  (when (eq this-command 'eval-expression) (smartparens-mode)))
+
+(add-hook 'minibuffer-setup-hook 'conditionally-enable-paredit-mode)
+
 ;;(defadvice haskell-mode-stylish-buffer (around skip-if-flycheck-errors activate)
 ;;  "Add haskell-stylish to haskell-mode."
 ;;  (unless (flycheck-has-current-errors-p 'error)
@@ -177,6 +204,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(create-lockfiles nil)
+ '(custom-safe-themes
+   (quote
+    ("8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(ede-project-directories (quote ("/home/remy/Documents/ResearchWork/KHaskell/k")))
  '(haskell-complete-module-preferred
    (quote
