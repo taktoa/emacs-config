@@ -40,7 +40,6 @@
     ;; haskell-flycheck
     flyspell
     magit
-    projectile
     diminish
     tramp
     powerline
@@ -61,7 +60,14 @@
     scala-mode
     purescript-mode
     tuareg
-    org-trello))
+    org-trello
+    sr-speedbar
+    perspective
+    projectile
+    persp-projectile
+    flx
+    flx-ido
+    zlc))
 
 ;; install new packages and init already installed packages
 (el-get 'sync my-packages)
@@ -102,6 +108,8 @@
 (setq default-frame-alist '((font . "Inconsolata-10")))
 ;;(setq default-frame-alist '((font . "Inconsolata-dz for Powerline-12")))
 
+(global-subword-mode)
+
 (global-hl-line-mode)                   ; highlight current line
 (global-linum-mode 1)                   ; add line numbers on the left
 (defvar linum-format)
@@ -110,12 +118,27 @@
 (defvar linum-disable)
 (setq linum-disable (lambda () (linum-mode -1)))
 
+(defun hook-select-flycheck-checker (checker)
+  "Select a flycheck checker (CHECKER) in a hook."
+  `(lambda () (interactive) (flycheck-select-checker ',checker)))
+
+(defun hook-create-dtw-hook ()
+  "Deletes trailing whitespace on save in a hook."
+  '(lambda ()
+     (add-hook 'write-file-hooks '(lambda ()
+                                    (interactive)
+                                    (delete-trailing-whitespace)))))
+
 (add-hook 'term-mode-hook                linum-disable)
 (add-hook 'multi-term-mode-hook          linum-disable)
 (add-hook 'haskell-interactive-mode-hook linum-disable)
-(add-hook 'java-mode-hook (lambda () (interactive) (flycheck-select-checker 'java-pmd)))
+(add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
+(add-hook 'java-mode-hook                (hook-create-dtw-hook))
 
 (cua-mode)
+
+(sr-speedbar-open)
+;;(zlc-mode)
 
 (load-theme 'zenburn t)
 
@@ -158,12 +181,27 @@
 (require 'powerline)
 (powerline-default-theme)
 
+(global-unset-key (kbd "C-<next>"))
+(global-set-key (kbd "C-<next>") 'scroll-down-command)
+(global-set-key (kbd "C-<prior>") 'scroll-up-command)
 (global-set-key (kbd "C-k") 'kill-whole-line)
 (global-set-key (kbd "C-u") 'yank)
 (global-set-key (kbd "C-x C-k") 'kill-buffer)
 (global-set-key (kbd "C-x f") 'find-file)
 (global-set-key [f5] 'compile)
 (global-set-key [f6] 'recompile)
+
+(persp-mode)
+(persp-turn-on-modestring)
+(global-unset-key (kbd "C-a"))
+(global-set-key (kbd "C-a s") 'persp-switch)
+(global-set-key (kbd "C-a b") 'persp-add-buffer)
+(global-set-key (kbd "C-a a") 'persp-rename)
+(global-set-key (kbd "C-a k") 'persp-kill)
+(global-set-key (kbd "C-a C-s") 'persp-switch)
+(global-set-key (kbd "C-a C-b") 'persp-add-buffer)
+(global-set-key (kbd "C-a C-a") 'persp-rename)
+(global-set-key (kbd "C-a C-k") 'persp-kill)
 
 (electric-indent-mode +1)
 
@@ -175,7 +213,8 @@
 (smex-initialize)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "M-X") 'smex-major-mode-commands)
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+(global-set-key (kbd "<menu>") 'smex)
+(global-set-key (kbd "<menu>") 'smex-major-mode-commands)
 
 (require 'smartparens-config)
 (smartparens-global-mode)
@@ -208,6 +247,9 @@
    (quote
     ("8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(ede-project-directories (quote ("/home/remy/Documents/ResearchWork/KHaskell/k")))
+ '(flycheck-pmd-rulesets
+   (quote
+    ("java-basic" "java-design" "java-imports" "java-braces" "java-unusedcode" "java-naming" "java-optimizations" "java-unnecessary" "java-sunsecure" "java-clone" "java-codesize" "java-comments" "java-coupling" "java-typeresolution" "java-strictexception" "java-strings" "java-empty" "java-junit")))
  '(haskell-complete-module-preferred
    (quote
     ("Data.ByteString" "Data.ByteString.Lazy" "Data.Conduit" "Data.Function" "Data.List" "Data.Map" "Data.Maybe" "Data.Monoid" "Data.Ord")))
@@ -230,7 +272,15 @@
  '(haskell-process-use-presentation-mode t)
  '(haskell-stylish-on-save t)
  '(hi2-show-indentations nil)
- '(hs-lint-executable "hlint --ignore='Use camelCase'"))
+ '(hs-lint-executable "hlint --ignore='Use camelCase'")
+ '(sh-alias-alist
+   (quote
+    ((csh . tcsh)
+     (ksh . pdksh)
+     (ksh . ksh88)
+     (bash2 . bash)
+     (sh5 . sh)
+     (nix-shell . zsh)))))
 
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 (require 'haskell-interactive-mode)
