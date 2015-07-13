@@ -1,29 +1,20 @@
 ;;; init.el --- The initial emacs load script
 ;;; Commentary:
-;; Copyright 2014 Remy Goldschmidt
+;; Copyright 2014-2015 Remy Goldschmidt / Sebastian Conybeare
 ;; Provided under the GNU General Public License v3.0
 ;;; Code:
-(add-to-list 'load-path "~/.emacs.d/el-get/el-get")
 
-(unless (require 'el-get nil t)
-  (with-current-buffer
-      (url-retrieve-synchronously
-       "https://github.com/dimitri/el-get/raw/master/el-get-install.el")
-    (goto-char (point-max))
-    (eval-print-last-sexp)))
 
-;; now either el-get is `require'd already, or have been `load'ed by the
-;; el-get installer.
+;; --------------------------------------------------------------------------------
+;; ----------------------------------- packages -----------------------------------
+;; --------------------------------------------------------------------------------
 
-(add-to-list 'el-get-recipe-path "~/.emacs.d/el-get-user/recipes")
 
-(require 'el-get)
-
-;; now set our own packages
 (defvar my-packages
   '(el-get
     cedet
     org-mode
+    color-theme-solarized
     color-theme-zenburn
     escreen
     helm
@@ -37,7 +28,6 @@
     flycheck
     flycheck-haskell
     flycheck-pmd
-    ;; haskell-flycheck
     flyspell
     magit
     diminish
@@ -70,65 +60,228 @@
     powerline
     smart-mode-line
     smart-mode-line-powerline-theme
+    scala-mode
+    undo-tree
     zlc))
 
-;; install new packages and init already installed packages
-(el-get 'sync my-packages)
 
-;; remove all packages not listed
+;; --------------------------------------------------------------------------------
+;; --------------------------------- el-get setup ---------------------------------
+;; --------------------------------------------------------------------------------
+
+
+(add-to-list 'load-path "~/.emacs.d/el-get/el-get")
+
+(unless (require 'el-get nil t)
+  (with-current-buffer
+      (url-retrieve-synchronously
+       "https://github.com/dimitri/el-get/raw/master/el-get-install.el")
+    (goto-char (point-max))
+    (eval-print-last-sexp)))
+
+(defvar el-get-recipe-path)
+(add-to-list 'el-get-recipe-path "~/.emacs.d/el-get-user/recipes")
+
+(require 'el-get)
+
+(el-get 'sync my-packages)
 (el-get-cleanup my-packages)
 
-;;(require 'cedet-remove-builtin)
 
-;;(require 'k3-mode)
+;; --------------------------------------------------------------------------------
+;; ----------------------------- require misc modules -----------------------------
+;; --------------------------------------------------------------------------------
 
-(require 'lilypond-mode)
 
-;; Disable vc-mode
-;;(setq vc-handled-backends ())
+(require 'flycheck)
+(require 'term)
+(require 'rainbow-delimiters)
+(require 'smartparens-config)
+(require 'powerline)
+(require 'smart-mode-line)
+(require 'smex)
+(require 'company)
+(require 'haskell-mode)
+(require 'haskell-interactive-mode)
+(require 'haskell-simple-indent)
+(require 'hi2)
+(require 'ace-jump-mode)
+(require 'helm)
+(require 'sr-speedbar)
+(require 'perspective)
+(require 'lilypond-mode) ;; (CONTROVERSIAL)
 
-;;(require 'haskell-flycheck)
 
-;;(require 'cedet-devel-load)
-;;(require 'ede/generic)
-;;(require 'ede/java-root)
-;;(require 'ede/jvm-base)
-;;(require 'ede/maven2)
-;;(require 'semantic/ia)
-;;(require 'semantic/db-javap)
-;;(semantic-mode 1)
-;;(global-ede-mode t)
+;; --------------------------------------------------------------------------------
+;; ----------------------------------- themeing -----------------------------------
+;; --------------------------------------------------------------------------------
 
-;;(global-set-key (kbd "S-C-<left>") 'shrink-window-horizontally)
-;;(global-set-key (kbd "S-C-<right>") 'enlarge-window-horizontally)
-;;(global-set-key (kbd "S-C-<down>") 'shrink-window)
-;;(global-set-key (kbd "S-C-<up>") 'enlarge-window)
 
-;; on to the visual settings
-(setq inhibit-splash-screen t)          ; no splash screen, thanks
-(line-number-mode 1)                    ; have line numbers and
-(column-number-mode 1)                  ; column numbers in the mode line
-
-(tool-bar-mode -1)                      ; no tool bar with icons
-(scroll-bar-mode -1)                    ; no scroll bars
+;; Disable various annoyances that come with Emacs
+(setq inhibit-splash-screen t)
+(column-number-mode 1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
 (menu-bar-mode -1)
 
+;; Set font to Inconsolata (CONTROVERSIAL)
 (setq default-frame-alist '((font . "Inconsolata-10")))
-;;(setq default-frame-alist '((font . "Inconsolata-dz for Powerline-12")))
 
-(global-subword-mode)
-(global-auto-revert-mode)
-
-(defvar auto-revert-check-vc-info)
-(setq auto-revert-check-vc-info t)
-
-(global-hl-line-mode)                   ; highlight current line
-(global-linum-mode 1)                   ; add line numbers on the left
+;; Line numbers
+(line-number-mode 1)
+(global-hl-line-mode)
+(global-linum-mode 1)
 (defvar linum-format)
 (setq linum-format "%4d \u2502")
+(defvar linum-disable (lambda () (linum-mode -1)))
 
-(defvar linum-disable)
-(setq linum-disable (lambda () (linum-mode -1)))
+;; Disable line numbers for various modes
+(add-hook 'term-mode-hook                linum-disable)
+(add-hook 'multi-term-mode-hook          linum-disable)
+(add-hook 'haskell-interactive-mode-hook linum-disable)
+(add-hook 'sr-speedbar-mode-hook         linum-disable)
+(add-hook 'speedbar-mode-hook            linum-disable)
+
+;; Enable zenburn theme
+(load-theme 'zenburn t)
+
+;; Thin cursor (CONTROVERSIAL)
+(setq-default cursor-type 'bar)
+
+;; Enable Powerline modeline
+(powerline-default-theme)
+
+;; Smart mode line
+(defvar sml/no-confirm-load-theme)
+(setq sml/no-confirm-load-theme t)
+(sml/setup)
+
+
+;; --------------------------------------------------------------------------------
+;; ------------------------------------ editing -----------------------------------
+;; --------------------------------------------------------------------------------
+
+
+;; Move by subword in CamelCase
+(global-subword-mode)
+
+;; Auto-revert buffers every so often
+(global-auto-revert-mode)
+(defvar auto-revert-check-vc-info t)
+
+;; Smarter editing with matching delimiters
+(smartparens-global-mode)
+
+;; On-the-fly syntax checking
+(global-flycheck-mode)
+(setq-default flycheck-emacs-lisp-load-path 'inherit)
+
+;; Add multiple "perspectives" for buffers (i.e.: workspaces)
+(persp-mode)
+(persp-turn-on-modestring)
+
+;; Indent automagically
+(electric-indent-mode +1)
+
+;; Better indenting for Haskell
+(turn-on-haskell-simple-indent)
+
+;; Better autocompletion
+(global-company-mode)
+
+;; Better minibuffer autocompletion
+(smex-initialize)
+
+;; In-buffer project browser
+(sr-speedbar-open)
+
+;; Allow X11 copy-and-paste into buffers
+(setq x-select-enable-clipboard t)
+
+;; Disable indenting with tabs by default
+(setq-default indent-tabs-mode nil)
+
+;; Enable undo-tree (CONTROVERSIAL)
+;;(require 'undo-tree)
+;;(global-undo-tree-mode)
+
+;; Scroll compilation output
+(setq-default compilation-scroll-output t)
+
+;; Set C tab width to 4
+(defvar c-default-style "linux")
+(setq-default c-basic-offset 4
+              tab-width 4)
+
+
+;; --------------------------------------------------------------------------------
+;; ---------------------------------- keybindings ---------------------------------
+;; --------------------------------------------------------------------------------
+
+
+;; Fix Ctrl-PgUp and Ctrl-PgDown weirdness
+(global-unset-key (kbd "C-<next>"))
+(global-set-key (kbd "C-<next>") 'scroll-down-command)
+(global-set-key (kbd "C-<prior>") 'scroll-up-command)
+
+;; Fix C-x C-k and C-x f not being the same as C-x k and C-x C-f respectively
+(global-set-key (kbd "C-x C-k") 'kill-buffer)
+(global-set-key (kbd "C-x f") 'find-file)
+
+;; Nano-style line killing/yanking (CONTROVERSIAL)
+(global-set-key (kbd "C-k") 'kill-whole-line)
+(global-set-key (kbd "C-u") 'yank)
+
+;; Useful shortcuts for compile
+(global-set-key [f5] 'compile)
+(global-set-key [f6] 'recompile)
+
+;; Resize windows with super + arrow keys
+(global-set-key (kbd "s-<left>")  'shrink-window-horizontally)
+(global-set-key (kbd "s-<right>") 'enlarge-window-horizontally)
+(global-set-key (kbd "s-<down>")  'shrink-window)
+(global-set-key (kbd "s-<up>")    'enlarge-window)
+
+;; Switch windows with meta + arrow keys
+(windmove-default-keybindings 'meta)
+(defvar windmove-wrap-around t)
+
+;; Free up C-a for keybindings (CONTROVERSIAL)
+(global-unset-key (kbd "C-a"))
+
+;; GNU screen-style keybindings for persp-mode
+(global-set-key (kbd "C-a s") 'persp-switch)
+(global-set-key (kbd "C-a b") 'persp-add-buffer)
+(global-set-key (kbd "C-a a") 'persp-rename)
+(global-set-key (kbd "C-a k") 'persp-kill)
+(global-set-key (kbd "C-a C-s") 'persp-switch)
+(global-set-key (kbd "C-a C-b") 'persp-add-buffer)
+(global-set-key (kbd "C-a C-a") 'persp-rename)
+(global-set-key (kbd "C-a C-k") 'persp-kill)
+
+;; Enable smex on M-x, M-X, and <menu>
+(global-set-key (kbd "M-x") 'smex)
+(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+(global-set-key (kbd "<menu>") 'smex)
+
+;; Enable CUA keybindings (CONTROVERSIAL)
+(cua-mode)
+
+;; Switch between line and char mode in term with C-' (CONTROVERSIAL)
+(define-key term-raw-map  (kbd "C-'") 'term-line-mode)
+(define-key term-mode-map (kbd "C-'") 'term-char-mode)
+
+;; Misc keybindings
+(global-set-key (kbd "C-x a r") 'align-regexp)
+(global-set-key (kbd "M-[") 'align)
+(define-key haskell-interactive-mode-map (kbd "C-c C-t") 'haskell-mode-show-type-at)
+(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+
+
+;; --------------------------------------------------------------------------------
+;; ---------------------------- hook utility functions ----------------------------
+;; --------------------------------------------------------------------------------
+
 
 (defun hook-select-flycheck-checker (checker)
   "Select a flycheck checker (CHECKER) in a hook."
@@ -144,28 +297,31 @@
   '(lambda () (add-hook 'write-contents-functions
                         (lambda () (save-excursion (untabify))))))
 
-(add-hook 'term-mode-hook                linum-disable)
-(add-hook 'multi-term-mode-hook          linum-disable)
-(add-hook 'haskell-interactive-mode-hook linum-disable)
-(add-hook 'sr-speedbar-mode-hook         linum-disable)
-(add-hook 'speedbar-mode-hook            linum-disable)
+(defun minibuffer-smartparens-mode ()
+  "Enable `smartparens-mode' in the minibuffer, during `eval-expression'."
+  '(lambda () (when (eq this-command 'eval-expression) (smartparens-mode))))
+
+
+;; --------------------------------------------------------------------------------
+;; ------------------------------------- hooks ------------------------------------
+;; --------------------------------------------------------------------------------
+
+
 (add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
 (add-hook 'java-mode-hook                (create-dtw-hook))
 (add-hook 'haskell-mode-hook             (create-dtw-hook))
 (add-hook 'lisp-mode-hook                (create-dtw-hook))
+(add-hook 'minibuffer-setup-hook         (minibuffer-smartparens-mode))
+(add-hook 'prog-mode-hook                'rainbow-delimiters-mode)
+(add-hook 'haskell-mode-hook             'turn-on-hi2)
+(add-hook 'haskell-mode-hook             'interactive-haskell-mode)
+(add-hook 'flycheck-mode-hook            'flycheck-haskell-setup)
 
-(cua-mode)
 
-(sr-speedbar-open)
-;;(zlc-mode)
+;; --------------------------------------------------------------------------------
+;; --------------------------- general utility functions --------------------------
+;; --------------------------------------------------------------------------------
 
-(load-theme 'zenburn t)
-
-(windmove-default-keybindings 'meta)
-(defvar windmove-wrap-around)
-(setq windmove-wrap-around t)
-
-(setq x-select-enable-clipboard t)
 
 (defun revert-all-buffers ()
   "Refreshes all open buffers from their respective files."
@@ -176,18 +332,13 @@
         (revert-buffer t t t) )))
   (message "Refreshed open files.") )
 
-(require 'term)
-(define-key term-raw-map  (kbd "C-'") 'term-line-mode)
-(define-key term-mode-map (kbd "C-'") 'term-char-mode)
 
-(require 'rainbow-delimiters)
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+;; --------------------------------------------------------------------------------
+;; ------------------------------- autosave/tempfiles -----------------------------
+;; --------------------------------------------------------------------------------
 
-(require 'smartparens-config)
-(setq-default indent-tabs-mode nil)
 
-(setq-default cursor-type 'bar)
-
+;; Autosave into ~/.emacs.d/backups
 (setq backup-directory-alist `(("." . ,(expand-file-name "~/.emacs.d/backups"))))
 
 ;; Save all tempfiles in $TMPDIR/emacs$UID/
@@ -197,64 +348,21 @@
 (setq auto-save-list-file-prefix
       emacs-tmp-dir)
 
-(require 'powerline)
-(powerline-default-theme)
 
-(global-unset-key (kbd "C-<next>"))
-(global-set-key (kbd "C-<next>") 'scroll-down-command)
-(global-set-key (kbd "C-<prior>") 'scroll-up-command)
-(global-set-key (kbd "C-k") 'kill-whole-line)
-(global-set-key (kbd "C-u") 'yank)
-(global-set-key (kbd "C-x C-k") 'kill-buffer)
-(global-set-key (kbd "C-x f") 'find-file)
-(global-set-key [f5] 'compile)
-(global-set-key [f6] 'recompile)
+;; --------------------------------------------------------------------------------
+;; --------------------------------- miscellaneous --------------------------------
+;; --------------------------------------------------------------------------------
 
-(persp-mode)
-(persp-turn-on-modestring)
-(global-unset-key (kbd "C-a"))
-(global-set-key (kbd "C-a s") 'persp-switch)
-(global-set-key (kbd "C-a b") 'persp-add-buffer)
-(global-set-key (kbd "C-a a") 'persp-rename)
-(global-set-key (kbd "C-a k") 'persp-kill)
-(global-set-key (kbd "C-a C-s") 'persp-switch)
-(global-set-key (kbd "C-a C-b") 'persp-add-buffer)
-(global-set-key (kbd "C-a C-a") 'persp-rename)
-(global-set-key (kbd "C-a C-k") 'persp-kill)
 
-(electric-indent-mode +1)
+(put 'upcase-region 'disabled nil)
 
-(setq-default flycheck-emacs-lisp-load-path 'inherit)
+;; (setq exec-path (append exec-path '("~/.emacs.d/bin"))) ;; (CONTROVERSIAL)
 
-(turn-on-haskell-simple-indent)
 
-(global-company-mode)
-(smex-initialize)
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
-(global-set-key (kbd "<menu>") 'smex)
-(global-set-key (kbd "<menu>") 'smex-major-mode-commands)
+;; --------------------------------------------------------------------------------
+;; -------------------------------- custom variables ------------------------------
+;; --------------------------------------------------------------------------------
 
-(require 'smartparens-config)
-(smartparens-global-mode)
-
-(defun conditionally-enable-paredit-mode ()
-  "Enable `paredit-mode' in the minibuffer, during `eval-expression'."
-  (when (eq this-command 'eval-expression) (smartparens-mode)))
-
-(add-hook 'minibuffer-setup-hook 'conditionally-enable-paredit-mode)
-
-;;(defadvice haskell-mode-stylish-buffer (around skip-if-flycheck-errors activate)
-;;  "Add haskell-stylish to haskell-mode."
-;;  (unless (flycheck-has-current-errors-p 'error)
-;;    ad-do-it))
-
-(add-hook 'haskell-mode-hook 'turn-on-hi2)
-
-(global-flycheck-mode)
-
-(eval-after-load 'flycheck
-  '(add-hook 'flycheck-mode-hook #'flycheck-haskell-setup))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -265,7 +373,6 @@
  '(custom-safe-themes
    (quote
     ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
- '(ede-project-directories (quote ("/home/remy/Documents/ResearchWork/KHaskell/k")))
  '(flycheck-pmd-rulesets
    (quote
     ("java-basic" "java-design" "java-imports" "java-braces" "java-unusedcode" "java-naming" "java-optimizations" "java-unnecessary" "java-sunsecure" "java-clone" "java-codesize" "java-comments" "java-coupling" "java-typeresolution" "java-strictexception" "java-strings" "java-empty" "java-junit")))
@@ -302,25 +409,12 @@
      (nix-shell . zsh))))
  '(tags-revert-without-query t))
 
-(add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-(require 'haskell-interactive-mode)
-(define-key haskell-interactive-mode-map (kbd "C-c C-t") 'haskell-mode-show-type-at)
-
-(global-set-key (kbd "C-x a r") 'align-regexp)
-(global-set-key (kbd "M-[") 'align)
-
-(require 'ace-jump-mode)
-(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
-
-(setq sml/no-confirm-load-theme t)
-(sml/setup)
-
-(provide 'init)
-;;; init.el ends here
-(put 'upcase-region 'disabled nil)
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(persp-selected-face ((t (:inherit sml/filename :foreground "blue")))))
+
+(provide 'init)
+;;; init.el ends here
