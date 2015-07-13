@@ -42,7 +42,6 @@
     magit
     diminish
     tramp
-    powerline
     company-mode
     company-ghc
     hi2
@@ -67,6 +66,10 @@
     persp-projectile
     flx
     flx-ido
+    delight
+    powerline
+    smart-mode-line
+    smart-mode-line-powerline-theme
     zlc))
 
 ;; install new packages and init already installed packages
@@ -78,6 +81,11 @@
 ;;(require 'cedet-remove-builtin)
 
 ;;(require 'k3-mode)
+
+(require 'lilypond-mode)
+
+;; Disable vc-mode
+;;(setq vc-handled-backends ())
 
 ;;(require 'haskell-flycheck)
 
@@ -109,6 +117,10 @@
 ;;(setq default-frame-alist '((font . "Inconsolata-dz for Powerline-12")))
 
 (global-subword-mode)
+(global-auto-revert-mode)
+
+(defvar auto-revert-check-vc-info)
+(setq auto-revert-check-vc-info t)
 
 (global-hl-line-mode)                   ; highlight current line
 (global-linum-mode 1)                   ; add line numbers on the left
@@ -122,18 +134,25 @@
   "Select a flycheck checker (CHECKER) in a hook."
   `(lambda () (interactive) (flycheck-select-checker ',checker)))
 
-(defun hook-create-dtw-hook ()
+(defun create-dtw-hook ()
   "Deletes trailing whitespace on save in a hook."
-  '(lambda ()
-     (add-hook 'write-file-hooks '(lambda ()
-                                    (interactive)
-                                    (delete-trailing-whitespace)))))
+  '(lambda () (add-hook 'write-contents-functions
+                        (lambda () (save-excursion (delete-trailing-whitespace))))))
+
+(defun create-untabify-hook ()
+  "Untabifies on save in a hook."
+  '(lambda () (add-hook 'write-contents-functions
+                        (lambda () (save-excursion (untabify))))))
 
 (add-hook 'term-mode-hook                linum-disable)
 (add-hook 'multi-term-mode-hook          linum-disable)
 (add-hook 'haskell-interactive-mode-hook linum-disable)
+(add-hook 'sr-speedbar-mode-hook         linum-disable)
+(add-hook 'speedbar-mode-hook            linum-disable)
 (add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
-(add-hook 'java-mode-hook                (hook-create-dtw-hook))
+(add-hook 'java-mode-hook                (create-dtw-hook))
+(add-hook 'haskell-mode-hook             (create-dtw-hook))
+(add-hook 'lisp-mode-hook                (create-dtw-hook))
 
 (cua-mode)
 
@@ -245,7 +264,7 @@
  '(create-lockfiles nil)
  '(custom-safe-themes
    (quote
-    ("8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
+    ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(ede-project-directories (quote ("/home/remy/Documents/ResearchWork/KHaskell/k")))
  '(flycheck-pmd-rulesets
    (quote
@@ -280,7 +299,8 @@
      (ksh . ksh88)
      (bash2 . bash)
      (sh5 . sh)
-     (nix-shell . zsh)))))
+     (nix-shell . zsh))))
+ '(tags-revert-without-query t))
 
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 (require 'haskell-interactive-mode)
@@ -292,6 +312,9 @@
 (require 'ace-jump-mode)
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
 
+(setq sml/no-confirm-load-theme t)
+(sml/setup)
+
 (provide 'init)
 ;;; init.el ends here
 (put 'upcase-region 'disabled nil)
@@ -300,4 +323,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(persp-selected-face ((t (:inherit sml/filename :foreground "blue")))))
