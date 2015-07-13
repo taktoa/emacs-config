@@ -142,6 +142,11 @@
 (add-hook 'sr-speedbar-mode-hook         linum-disable)
 (add-hook 'speedbar-mode-hook            linum-disable)
 
+;; Disable horizontal autoscroll in sr-speedbar
+(defvar disable-auto-hscroll (lambda () (setq auto-hscroll-mode nil)))
+(add-hook 'sr-speedbar-mode-hook         disable-auto-hscroll)
+(add-hook 'speedbar-mode-hook            disable-auto-hscroll)
+
 ;; Enable zenburn theme
 (load-theme 'zenburn t)
 
