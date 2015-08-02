@@ -5,6 +5,20 @@
 ;;; Code:
 
 
+;;;; --------------------------------------------------------------------------------
+;;;; ------------------------------ switch to scheme --------------------------------
+;;;; --------------------------------------------------------------------------------
+;;
+;;
+;;;; Switch to scheme
+;;(load-library "scheme")
+;;(scheme-interaction-mode)
+;;(use-modules ((elisp-symbols)   #:prefix ev-)
+;;             ((elisp-functions) #:prefix ef-)
+;;             ((elisp-plists)    #:prefix ep-))
+;;(ef-message "Switched to Scheme in initialization")
+
+
 ;; --------------------------------------------------------------------------------
 ;; ---------------------------------- constants -----------------------------------
 ;; --------------------------------------------------------------------------------
@@ -19,6 +33,8 @@
 
 ;;(defvar init-extra-exec-path '("~/.emacs.d/bin")) ;; CONTROVERSIAL
 (defvar init-extra-exec-path nil)
+
+(defvar init-default-font-size 12)
 
 
 ;; --------------------------------------------------------------------------------
@@ -76,9 +92,14 @@ If DISABLED is true, do nothing."
     (throw 'return t)))
 
 
+(defun packagep (package)
+  "Is the given PACKAGE installed?"
+  (member package my-packages))
+
 (defun add-package (package)
   "Add the given PACKAGE to `my-packages'."
-  (setq my-packages (append my-packages (list package))))
+  (unless (packagep package)
+    (setq my-packages (append my-packages (list package)))))
 
 (defun add-to-packages (packages)
   "Add the given PACKAGES to `my-packages'."
@@ -88,7 +109,6 @@ If DISABLED is true, do nothing."
 ;; --------------------------------------------------------------------------------
 ;; ------------------------------ utility functions -------------------------------
 ;; --------------------------------------------------------------------------------
-
 
 (defun decrement (symbol)
   "Decrement the value held in the variable named SYMBOL."
@@ -103,6 +123,30 @@ If DISABLED is true, do nothing."
     (if (numberp value)
         (set symbol (+ value 1))
       (error "Wrong argument: increment takes a numeric variable symbol"))))
+
+(defun strikethrough-region (pt mk)
+  "Strikethrough the selected plaintext region (from PT to MK)."
+  (interactive "r")
+  (save-excursion
+    (goto-char pt)
+    (let ((end mk))
+      (while (<= (point) end)
+        (insert-char ?-)
+        (forward-char)
+        (increment 'end)))))
+
+(defun unstrikethrough-region (pt mk)
+  "Remove a strikethrough in a plaintext region (from PT to MK)."
+  (interactive "r")
+  (save-excursion
+    (goto-char pt)
+    (while (not (= (char-after) ?-))
+      (forward-char))
+    (let ((end mk))
+      (while (<= (point) end)
+        (delete-char 1)
+        (forward-char)
+        (decrement 'end)))))
 
 (defun profile-function (function &optional args)
   "Profile a given FUNCTION symbol with optional ARGS."
@@ -211,7 +255,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
 (defun lucid-emacs-p ()
   "Return non-nil if you are running Lucid Emacs."
-  (string-match "XEmacs\\|Lucid" emacs-version))
+  (if (string-match "XEmacs\\|Lucid" emacs-version) t nil))
 
 
 ;; --------------------------------------------------------------------------------
@@ -230,7 +274,6 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 ;; --------------------------------------------------------------------------------
 ;; ---------------------------- autodetect capabilities ---------------------------
 ;; --------------------------------------------------------------------------------
-
 
 
 (defun init-detect-system-capabilities ()
@@ -440,6 +483,8 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (executable-exists-p "jc")          (add-cap "lang-j"))
   (when (executable-exists-p "newlisp")     (add-cap "lang-newlisp"))
   (when (executable-exists-p "racket")      (add-cap "lang-racket"))
+  (when (executable-exists-p "guile")       (add-cap "lang-guile"))
+  (when (executable-exists-p "chicken")     (add-cap "lang-chicken"))
   (when (executable-exists-p "lua")         (add-cap "lang-lua"))
   (when (executable-exists-p "shen")        (add-cap "lang-shen"))
   (when (executable-exists-p "sml")         (add-cap "lang-sml"))
@@ -451,6 +496,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
 (defun init-detect-misc-capabilities ()
   "Detect miscellaneous capabilities."
+  (when (executable-exists-p "ocamlfind")   (add-cap "util-ocamlfind"))
   (when (executable-exists-p "pandoc")      (add-cap "util-pandoc"))
   (when (executable-exists-p "pmd")         (add-cap "util-pmd"))
   (when (executable-exists-p "top")         (add-cap "util-top")))
@@ -485,13 +531,16 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 ;; --------------------------------------------------------------------------------
 
 
-
 ;; EDIT THESE TO YOUR SATISFACTION
 
 (defun init-customize-options ()
   "Initialize the my-options variable with your customizations."
+  
+  (add-opt "extras"                nil) ;; typically very unobjectionable stuff
+  
   (add-opt "ace-jump-mode"         nil)
   (add-opt "speedbar"              nil)
+  (add-opt "sr-speedbar"           t)
   (add-opt "projectile"            nil)
   (add-opt "perspective"           nil)
   (add-opt "autorevert"            nil)
@@ -507,6 +556,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
   (add-opt "iedit"                 nil)
   (add-opt "fill-column-indicator" nil)
+  (add-opt "fill-column-80"        nil)
   (add-opt "multi-term"            nil)
   (add-opt "rainbow-delimiters"    nil)
 
@@ -525,22 +575,32 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
   ;; CONTROVERSIAL DEFAULTS:
 
+  ;; Email
+  (add-opt "wanderlust-email"      nil)
+  (add-opt "offlineimap"           nil)
+
+  ;; Window keybinds
   (add-opt "meta-switch-windows"   nil)
   (add-opt "super-resize-windows"  nil)
 
+  ;; Theming
   (add-opt "custom-fonts"          nil)
   (add-opt "solarized-dark"        t)
   (add-opt "solarized-light"       t)
   (add-opt "zenburn"               nil)
   (add-opt "thin-cursor"           nil)
 
+  ;; Editor keybinds
   (add-opt "free-up-keys"          nil)
+  (add-opt "comint-arrow-history"  nil)
   (add-opt "nano-yank-kill"        nil)
   (add-opt "cua-mode"              nil)
 
+  ;; Indentation
   (add-opt "indent-spaces"         nil)
   (add-opt "sane-c-tab-width"      nil)
 
+  ;; Misc
   (add-opt "term-mode-switch"      nil)
   (add-opt "undo-tree"             t)
 
@@ -568,6 +628,8 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   "Generate the list of packages to install."
   (add-to-packages '(cedet-devel el-get let-alist tramp diminish delight))
 
+  (when (optionp "extras")                    (add-package 'help-fns+))
+
   (when (optionp "perspective")               (add-package 'perspective))
   (when (optionp "projectile")                (add-package 'projectile))
 
@@ -575,10 +637,14 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (optionp "fill-column-indicator")     (add-package 'fill-column-indicator))
   (when (optionp "multi-term")                (add-package 'multi-term))
   (when (optionp "rainbow-delimiters")        (add-package 'rainbow-delimiters))
-  (when (optionp "speedbar")                  (add-package 'sr-speedbar))
+  (when (optionp "sr-speedbar")               (add-package 'sr-speedbar))
   (when (optionp "ace-jump-mode")             (add-package 'ace-jump-mode))
 
-  (when (optionp "org")                       (add-to-packages '(org-mode org-trello)))
+  (when (optionp "wanderlust-email")          (add-package 'wanderlust))
+  (when (optionp "offlineimap")               (add-package 'offlineimap))
+  
+  (when (optionp "org")                       (add-package 'org-mode))
+  (when (optionp "org-trello")                (add-package 'org-trello))
   (when (optionp "yaml")                      (add-package 'yaml-mode))
   (when (optionp "markdown")                  (add-package 'markdown-mode))
 
@@ -604,7 +670,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
                                                                  company-ghc
                                                                  ghc-mod
                                                                  hi2)))
-  (when (capabilityp "lang-git")              (add-package 'magit))
+  (when (capabilityp "vcs-git")               (add-package 'magit))
   (when (capabilityp "lang-ledger")           (add-package 'ledger-mode))
   (when (capabilityp "lang-latex")            (add-package 'auctex))
   (when (capabilityp "lang-ocaml")            (add-package 'tuareg-mode))
@@ -612,9 +678,16 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (capabilityp "lang-purescript")       (add-package 'purescript-mode))
   (when (capabilityp "lang-elm")              (add-package 'elm-mode))
   (when (capabilityp "lang-kframework")       (add-package 'k3-mode))
+  (when (capabilityp "lang-chicken")          (add-package 'geiser))
+  (when (capabilityp "lang-guile")            (add-package 'geiser))
+  (when (capabilityp "lang-racket")           (add-package 'geiser))
   (when (capabilityp "lang-zsh")              (add-package 'zlc))
   (when (capabilityp "util-pmd")              (add-package 'flycheck-pmd))
-  (when (capabilityp "lang-java")             (add-to-packages '(scala-mode groovy-mode)))
+  (when (capabilityp "lang-java")             (add-to-packages '(scala-mode
+                                                                 groovy-mode
+                                                                 javadoc-help
+                                                                 javadoc-lookup
+                                                                 javaimp)))
   (when (and (capabilitiesp '("lang-java" "lang-groovy" "build-gradle"))
              (optionp "malabar"))             (add-package 'malabar-mode))
 
@@ -667,6 +740,8 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   "Require necessary modules for init.el."
   (require 'term)
 
+  (when (optionp "extras")
+    (require 'help-fns+))
   (when (optionp "flycheck")
     (require 'flycheck))
   (when (optionp "rainbow-delimiters")
@@ -685,13 +760,15 @@ BODY is the text of the body (e.g.: the HTML of the page)."
     (require 'ace-jump-mode))
   (when (optionp "helm")
     (require 'helm))
-  (when (optionp "speedbar")
+  (when (optionp "sr-speedbar")
     (require 'sr-speedbar))
   (when (optionp "perspective")
     (require 'perspective))
   (when (and (optionp "projectile")
              (optionp "perspective"))
     (require 'persp-projectile))
+  (when (optionp "comint-arrow-history")
+    (require 'comint))
   (when (optionp "undo-tree")
     (require 'undo-tree))
 
@@ -708,6 +785,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 ;; ----------------------------------- themeing -----------------------------------
 ;; --------------------------------------------------------------------------------
 
+
 (defun init-theme-options ()
   "Initialize graphical/theme-related options."
 
@@ -721,7 +799,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
   ;; Set default frame font
   (when (and (capabilityp "graphics") (optionp "custom-fonts"))
-    (defvar default-frame-font
+    (defvar init-default-font
       (cond ((capabilityp "font-inconsolata")   "Inconsolata")
             ((capabilityp "font-menlo")         "Menlo")
             ((capabilityp "font-meslo")         "Meslo")
@@ -731,11 +809,10 @@ BODY is the text of the body (e.g.: the HTML of the page)."
             ((capabilityp "font-sourcecodepro") "Source Code Pro")
             ((capabilityp "font-luxi")          "Luxi Mono")
             ((capabilityp "font-consolas")      "Consolas")))
-    (defvar default-frame-font-size 10)
     (setq default-frame-alist
           (list (cons 'font (format "%s-%d"
-                                    default-frame-font
-                                    default-frame-font-size)))))
+                                    init-default-font
+                                    init-default-font-size)))))
 
   ;; Line numbers
   (when (and (capabilityp "graphics") (optionp "line-numbers"))
@@ -744,24 +821,41 @@ BODY is the text of the body (e.g.: the HTML of the page)."
     (global-linum-mode 1)
     (setq-default linum-format "%4d \u2502"))
 
+  (defun linum-disable ()
+    "Disable line numbers"
+    (interactive)
+    (linum-mode -1))
+
   ;; Disable line numbers for various modes
   (when (and (capabilityp "graphics") (optionp "line-numbers"))
-    (defvar linum-disable (lambda () (linum-mode -1)))
-    (add-hook 'term-mode-hook                  linum-disable)
-    (add-hook 'package-menu-mode-hook          linum-disable)
+    (add-hook 'term-mode-hook                  'linum-disable)
+    (add-hook 'Info-mode-hook                  'linum-disable)
+    (add-hook 'package-menu-mode-hook          'linum-disable)
     (when (optionp "multi-term")
-      (add-hook 'multi-term-mode-hook          linum-disable))
+      (add-hook 'multi-term-mode-hook          'linum-disable))
     (when (capabilityp "exec-haskell")
-      (add-hook 'haskell-interactive-mode-hook linum-disable))
+      (add-hook 'haskell-interactive-mode-hook 'linum-disable))
     (when (optionp "speedbar")
-      (add-hook 'sr-speedbar-mode-hook         linum-disable)
-      (add-hook 'speedbar-mode-hook            linum-disable)))
+      (add-hook 'speedbar-mode-hook            'linum-disable))
+    (when (optionp "sr-speedbar")
+      (add-hook 'sr-speedbar-mode-hook         'linum-disable)))
 
+  ;; Set fill-column-indicator to blue and enable in prog-mode
+  (when (optionp "fill-column-indicator")
+    (add-hook 'prog-mode-hook (lambda ()
+                                (interactive)
+                                (defvar fci-rule-color)
+                                (setq fci-rule-color "lightblue")))
+    (add-hook 'prog-mode-hook 'fci-mode))
+
+  ;; Set fill-column to 80 by default
+  (when (optionp "fill-column-80")
+    (setq-default fill-column 80))
+  
   ;; Disable horizontal autoscroll in sr-speedbar
-  (when (optionp "speedbar")
+  (when (optionp "sr-speedbar")
     (defvar disable-auto-hscroll (lambda () (setq auto-hscroll-mode nil)))
-    (add-hook 'sr-speedbar-mode-hook         disable-auto-hscroll)
-    (add-hook 'speedbar-mode-hook            disable-auto-hscroll))
+    (add-hook 'sr-speedbar-mode-hook         disable-auto-hscroll))
 
   ;; Enable zenburn theme
   (when (optionp "zenburn")
@@ -769,11 +863,11 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
   ;; Enable solarized-light theme
   (when (optionp "solarized-light")
-    (load-theme 'zenburn t))
+    (load-theme 'solarized-light t))
 
   ;; Enable solarized-dark theme
   (when (optionp "solarized-dark")
-    (load-theme 'zenburn t))
+    (load-theme 'solarized-dark t))
 
   ;; Thin cursor
   (when (and (capabilityp "graphics") (optionp "thin-cursor"))
@@ -808,12 +902,12 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
   ;; Smarter editing with matching delimiters
   (when (optionp "smartparens")
-    (smartparens-global-mode))
+    (smartparens-global-mode)
+    (show-smartparens-global-mode))
 
   ;; On-the-fly syntax checking
   (when (optionp "flycheck")
-    (global-flycheck-mode)
-    (setq-default flycheck-emacs-lisp-load-path 'inherit))
+    (global-flycheck-mode))
 
   ;; Add multiple "perspectives" for buffers (i.e.: workspaces)
   (when (optionp "perspective")
@@ -836,10 +930,17 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (optionp "smex")
     (smex-initialize))
 
-  ;; In-buffer project browser
-  (when (optionp "speedbar")
-    (sr-speedbar-open))
-
+  ;; Available modes for geiser
+  (when (packagep 'geiser)
+    (defvar geiser-active-implementations)
+    (setq geiser-active-implementations '())
+    (when (capabilityp "lang-racket")
+      (add-to-list 'geiser-active-implementations 'racket))
+    (when (capabilityp "lang-guile")
+      (add-to-list 'geiser-active-implementations 'guile))
+    (when (capabilityp "lang-chicken")
+      (add-to-list 'geiser-active-implementations 'chicken)))
+  
   ;; Allow X11 copy-and-paste into buffers
   (when (capabilityp "graphics-x11")
     (setq x-select-enable-clipboard t))
@@ -875,30 +976,42 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 (defun init-keyboard-options ()
   "Initialize keyboard options."
 
-  ;; Fix C-z weirdness
   (when (optionp "fix-emacs-cruft")
-    (global-unset-key (kbd "C-z")))
+    ;; What is this, vim? We don't use <insert> here.
+    (global-unset-key (kbd "<insert>"))
+    
+    ;; Fix C-z weirdness
+    (global-unset-key (kbd "C-z"))
+    
+    ;; Unset C-x C-b
+    (global-unset-key (kbd "C-x C-b"))
 
-  ;; Fix Ctrl-PgUp and Ctrl-PgDown weirdness
-  (when (optionp "fix-emacs-cruft")
+    ;; Add lambda key
+    (global-set-key (kbd "C-|") (lambda ()
+                                  (interactive)
+                                  (insert-char ?λ)))
+    
+    ;; Fix Ctrl-PgUp and Ctrl-PgDown weirdness
     (global-unset-key (kbd "C-<next>"))
     (global-set-key (kbd "C-<next>") 'scroll-down-command)
-    (global-set-key (kbd "C-<prior>") 'scroll-up-command))
-
-  ;; Fix C-x C-k and C-x f not being the same as C-x k and C-x C-f respectively
-  (when (optionp "fix-emacs-cruft")
+    (global-set-key (kbd "C-<prior>") 'scroll-up-command)
+    
+    ;; Fix C-x C-k and C-x f not being the same as C-x k and C-x C-f respectively
     (global-set-key (kbd "C-x C-k") 'kill-buffer)
-    (global-set-key (kbd "C-x f") 'find-file))
+    (global-set-key (kbd "C-x f") 'find-file)
+    
+    ;; Useful shortcuts for compile
+    (global-set-key [f5] 'compile)
+    (global-set-key [f6] 'recompile)
+
+    ;; Shortcuts for replace-regexp and align-regexp
+    (global-set-key (kbd "M-[") 'replace-regexp)
+    (global-set-key (kbd "M-]") 'align-regexp))
 
   ;; Nano-style line killing/yanking
   (when (optionp "nano-yank-kill")
     (global-set-key (kbd "C-k") 'kill-whole-line)
     (global-set-key (kbd "C-u") 'yank))
-
-  ;; Useful shortcuts for compile
-  (when (optionp "fix-emacs-cruft")
-    (global-set-key [f5] 'compile)
-    (global-set-key [f6] 'recompile))
 
   ;; Resize windows with super + arrow keys
   (when (optionp "super-resize-windows")
@@ -916,6 +1029,52 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (optionp "free-up-keys")
     (global-unset-key (kbd "C-a")))
 
+  ;; Up and down arrow work as you would expect for comint shells
+  (when (optionp "comint-arrow-history")
+    (defun comint-after-character-insert-fix ()
+      "Reset point to the terminal prompt, but only in `comint'-derived modes."
+      (interactive)
+      (when (and (derived-mode-p 'comint-mode)
+                 (not (comint-after-pmark-p)))
+        (let ((c (preceding-char)))
+          (delete-backward-char 1)
+          (goto-char (point-max))
+          (insert-char c))))
+    
+    (defun enable-comint-keyboard-fixes ()
+      "Enable fixes for `comint'-derived mode key maps."
+      (interactive)
+      (add-hook 'post-self-insert-hook 'comint-after-character-insert-fix))
+    
+    (defun disable-comint-keyboard-fixes ()
+      "Disable fixes for `comint'-derived mode key maps."
+      (interactive)
+      (remove-hook 'post-self-insert-hook 'comint-after-character-insert-fix))
+
+    (enable-comint-keyboard-fixes)
+
+    (defun comint-jump-to-end-and-up ()
+      "Jump to end of buffer and run (`comint-previous-input' 1)"
+      (interactive)
+      (goto-char (point-max))
+      (comint-previous-input 1))
+
+    (defun comint-jump-to-end-and-down ()
+      "Jump to end of buffer and run (`comint-next-input' 1)"
+      (interactive)
+      (goto-char (point-max))
+      (comint-next-input 1))
+
+    (defun comint-jump-to-end-and-send (&optional x)
+      "Jump to end of buffer and run `comint-send-input'"
+      (interactive)
+      (goto-char (point-max))
+      (if x (x) (comint-send-input)))
+    
+    (define-key comint-mode-map     (kbd "<up>") 'comint-jump-to-end-and-up)
+    (define-key comint-mode-map   (kbd "<down>") 'comint-jump-to-end-and-down)
+    (define-key comint-mode-map      (kbd "RET") 'comint-jump-to-end-and-send))
+  
   ;; GNU screen-style keybindings for perspective
   (when (optionp "perspective")
     (global-set-key (kbd "C-a s") 'persp-switch)
@@ -943,9 +1102,6 @@ BODY is the text of the body (e.g.: the HTML of the page)."
     (define-key term-mode-map (kbd "C-'") 'term-char-mode))
 
   ;; Misc keybindings
-  (when (optionp "fix-emacs-cruft")
-    (global-set-key (kbd "C-x a r") 'align-regexp)
-    (global-set-key (kbd "M-[") 'align))
   (when (optionp "ace-jump-mode")
     (define-key global-map (kbd "C-c SPC") 'ace-jump-mode))
   (when (capabilityp "exec-haskell")
@@ -978,6 +1134,45 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   "Run the function `smartparens-mode' in the minibuffer, during `eval-expression'."
   '(lambda () (when (eq this-command 'eval-expression) (smartparens-mode))))
 
+(defun do-nothing ()
+  "Do nothing, interactively."
+  (interactive)
+  nil)
+
+(defun make-buffer-unsaveable ()
+  "Make the current buffer unsaveable, but still editable.
+It will still prompt you to save on exit, if a file is associated
+with the buffer in which this was run."
+  (interactive)
+  ;; FIXME: couldn't find a way to make this work that wasn't annoying
+  ;; (local-set-key (kbd "C-x C-s") 'do-nothing)
+  ;; (setq buffer-read-only t)
+  ;; (setq inhibit-read-only t)
+  )
+
+(defun make-buffer-saveable ()
+  "Revert the effects of `make-buffer-unsaveable'."
+  (interactive)
+  (local-unset-key (kbd "C-x C-s"))
+  (setq buffer-read-only nil)
+  (setq inhibit-read-only nil))
+
+;;(defun guile-fixes ()
+;;  "Fixes for `scheme-mode' / guile."
+;;  (interactive)
+;;  ())
+
+(defun uniq-region (start end)
+  "Find duplicate lines in region START to END keeping first occurrence."
+  (interactive "*r")
+  (save-excursion
+    (let ((end (copy-marker end)))
+      (while
+          (progn
+            (goto-char start)
+            (re-search-forward "^\\(.*\\)\n\\(\\(.*\n\\)*\\)\\1\n" end t))
+        (replace-match "\\1\n\\2")))))
+
 
 ;; --------------------------------------------------------------------------------
 ;; ------------------------------------- hooks ------------------------------------
@@ -986,10 +1181,15 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
 (defun init-hooks ()
   "Initialize hook options."
+  (when (and (optionsp '("offlineimap" "wanderlust-email"))
+             (capabilityp "internet"))
+    (add-hook 'wl-hook 'offlineimap))
   (add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
   (add-hook 'java-mode-hook                (create-dtw-hook))
   (add-hook 'haskell-mode-hook             (create-dtw-hook))
   (add-hook 'lisp-mode-hook                (create-dtw-hook))
+  (add-hook 'scheme-mode-hook              (create-dtw-hook))
+  (add-hook 'comint-mode-hook              'make-buffer-unsaveable)
   (add-hook 'minibuffer-setup-hook         (minibuffer-smartparens-mode))
   (add-hook 'prog-mode-hook                'rainbow-delimiters-mode)
   (add-hook 'haskell-mode-hook             'turn-on-hi2)
@@ -1052,6 +1252,8 @@ BODY is the text of the body (e.g.: the HTML of the page)."
                       init-hooks
                       init-fix-miscellany))
 
+(setq-default flycheck-emacs-lisp-load-path load-path)
+
 
 ;; --------------------------------------------------------------------------------
 ;; -------------------------------- custom variables ------------------------------
@@ -1067,9 +1269,13 @@ BODY is the text of the body (e.g.: the HTML of the page)."
  '(custom-safe-themes
    (quote
     ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
+ '(elmo-localdir-folder-path "~/.emacs.d/mail")
+ '(elmo-msgdb-directory "~/.emacs.d/elmo")
  '(flycheck-pmd-rulesets
    (quote
     ("java-basic" "java-design" "java-imports" "java-braces" "java-unusedcode" "java-naming" "java-optimizations" "java-unnecessary" "java-sunsecure" "java-clone" "java-codesize" "java-comments" "java-coupling" "java-typeresolution" "java-strictexception" "java-strings" "java-empty" "java-junit")))
+ '(geiser-guile-extra-keywords (quote ("lambda\\*")))
+ '(geiser-guile-load-init-file-p t)
  '(haskell-complete-module-preferred
    (quote
     ("Data.ByteString" "Data.ByteString.Lazy" "Data.Conduit" "Data.Function" "Data.List" "Data.Map" "Data.Maybe" "Data.Monoid" "Data.Ord")))
@@ -1079,7 +1285,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
  '(haskell-interactive-mode-scroll-to-bottom t)
  '(haskell-mode-hook
    (quote
-    (interactive-haskell-mode turn-on-haskell-indentation turn-on-haskell-doc-mode)))
+    (interactive-haskell-mode turn-on-haskell-indentation turn-on-haskell-doc-mode)) t)
  '(haskell-notify-p t)
  '(haskell-process-auto-import-loaded-modules t)
  '(haskell-process-generate-tags nil)
@@ -1093,6 +1299,11 @@ BODY is the text of the body (e.g.: the HTML of the page)."
  '(haskell-stylish-on-save t)
  '(hi2-show-indentations nil)
  '(hs-lint-executable "hlint --ignore='Use camelCase'")
+ '(lisp-backquote-indentation nil)
+ '(lisp-lambda-list-keyword-alignment t)
+ '(lisp-lambda-list-keyword-parameter-alignment t)
+ '(lisp-lambda-list-keyword-parameter-indentation 0)
+ '(offlineimap-mode-line-text "imap: ")
  '(sh-alias-alist
    (quote
     ((csh . tcsh)
@@ -1101,7 +1312,21 @@ BODY is the text of the body (e.g.: the HTML of the page)."
      (bash2 . bash)
      (sh5 . sh)
      (nix-shell . zsh))))
- '(tags-revert-without-query t))
+ '(tags-revert-without-query t)
+ '(warning-suppress-types (quote ((\(undo\ discard-info\)))))
+ '(wl-address-file "~/.emacs.d/wl/addresses")
+ '(wl-alias-file "~/.emacs.d/wl/aliases")
+ '(wl-default-spec ".")
+ '(wl-folders-file "~/.emacs.d/wl/folders")
+ '(wl-from "Remy Goldschmidt <taktoa@gmail.com>")
+ '(wl-init-file "~/.emacs.d/wl/settings")
+ '(wl-queue-folder ".queue")
+ '(wl-score-files-directory "~/.emacs.d/elmo/")
+ '(wl-smtp-authenticate-type "plain")
+ '(wl-smtp-connection-type (quote starttls))
+ '(wl-smtp-posting-port 587)
+ '(wl-temporary-file-directory "~/.emacs.d/wl/tmp/")
+ '(x-gtk-use-system-tooltips nil))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -1112,3 +1337,4 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
 (provide 'init)
 ;;; init.el ends here
+(put 'downcase-region 'disabled nil)
