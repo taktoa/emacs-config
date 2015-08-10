@@ -5,24 +5,12 @@
 ;;; Code:
 
 
-;;;; --------------------------------------------------------------------------------
-;;;; ------------------------------ switch to scheme --------------------------------
-;;;; --------------------------------------------------------------------------------
-;;
-;;
-;;;; Switch to scheme
-;;(load-library "scheme")
-;;(scheme-interaction-mode)
-;;(use-modules ((elisp-symbols)   #:prefix ev-)
-;;             ((elisp-functions) #:prefix ef-)
-;;             ((elisp-plists)    #:prefix ep-))
-;;(ef-message "Switched to Scheme in initialization")
-
-
 ;; --------------------------------------------------------------------------------
 ;; ---------------------------------- constants -----------------------------------
 ;; --------------------------------------------------------------------------------
 
+
+(load-file "~/.emacs.d/detect.el")
 
 (defvar init-profiling-enabled nil) ;; Enable profiling
 (defvar init-debug-enabled nil)     ;; Enable debug messages
@@ -36,13 +24,14 @@
 
 (defvar init-default-font-size 12)
 
+(require 'detect)
+
 
 ;; --------------------------------------------------------------------------------
 ;; ------------------------------- global variables -------------------------------
 ;; --------------------------------------------------------------------------------
 
 
-(defvar my-capabilities nil)
 (defvar my-options nil)
 (defvar my-packages nil)
 
@@ -50,26 +39,6 @@
 ;; --------------------------------------------------------------------------------
 ;; --------------------------- global accessors/mutators --------------------------
 ;; --------------------------------------------------------------------------------
-
-
-(defun add-cap (cap &optional disabled)
-  "Add CAP to the set of existing capabilities.
-If DISABLED is true, do nothing."
-  (unless disabled
-    (unless (capabilityp cap)
-      (push cap my-capabilities))))
-
-(defun capabilityp (cap)
-  "Is the given CAP an available capability?"
-  (member cap my-capabilities))
-
-(defun capabilitiesp (caps)
-  "Are the given CAPS available capabilities?"
-  (catch 'return
-    (dolist (element caps)
-      (unless (capabilityp element)
-        (throw 'return nil)))
-    (throw 'return t)))
 
 
 (defun add-opt (opt &optional disabled)
@@ -180,73 +149,6 @@ If DISABLED is true, do nothing."
         (revert-buffer t t t) )))
   (message "Refreshed open files.") )
 
-(defun wait-on-variable (symbol resolution timeout)
-  "Wait for the value of a variable to become non-nil.
-Specifically, check if the value held in SYMBOL is non-nil
-every RESOLUTION milliseconds until the TIMEOUT, also measured
-in milliseconds.
-If the timeout is reached, return nil.
-Otherwise, return the number of milliseconds that passed."
-  (catch 'return
-    (let ((counter 0))
-      (while (not (symbol-value symbol))
-        (when (> (* counter resolution) timeout) (throw 'return nil))
-        (sleep-for 0 resolution)
-        (increment 'counter))
-      (throw 'return (* counter resolution)))))
-
-(defun get-url (url callback)
-  "Retrieve a URL and run the CALLBACK on the parsed results.
-Returns nil if the request did not lead to an HTTP response
-CALLBACK is called with (apply CALLBACK STATUS HEADERS BODY).
-STATUS is the HTTP status code, e.g.: `200' for HTTP OK
-HEADERS is a list of cons cells containing a map from a header name
-to its value (e.g.: '((\"Content-Type\" . \"text/html\"))).
-BODY is the text of the body (e.g.: the HTML of the page)."
-  (catch 'return
-    (let* ((download-done nil)
-           (download-timeout 1000)
-           (encoded-url (url-encode-url url))
-           (url-callback (lambda (status) (setq download-done t)))
-           (response-buffer
-            (ignore-errors (url-retrieve encoded-url url-callback nil t t)))
-           (response (progn (unless response-buffer (throw 'return nil))
-                            (with-current-buffer response-buffer
-                              (wait-on-variable 'download-done 50
-                                                download-timeout)
-                                (buffer-string))))
-           (split-response (split-string response "\n"))
-           (status nil) (headers nil) (body nil)
-           (status-regex (rx (and "HTTP/" (and digit "." digit)
-                                  space (group (and digit digit digit))
-                                  space (one-or-more (or letter space))
-                                  line-end)))
-           (header-regex (rx (and (group (one-or-more (or letter "-")))
-                                  ": " (group (one-or-more not-newline))
-                                  line-end)))
-           (process-status (lambda (s)
-                             (string-match status-regex s)
-                             (match-string 1 s)))
-           (process-header (lambda (h)
-                             (string-match header-regex h)
-                             (cons (match-string 1 h) (match-string 2 h)))))
-      (setq status (apply process-status (list (pop split-response))))
-      (while (not (string-equal (car split-response) ""))
-        (push (apply process-header (list (pop split-response))) headers))
-      (pop split-response)
-      (setq body (mapconcat (lambda (x) x) split-response "\n"))
-      (throw 'return (apply callback (list status headers body))))))
-
-(defun url-resolves-p (url)
-  "Test whether the given URL resolves."
-  (get-url url (lambda (status headers body)
-                 (let ((s1 (car (string-to-list status))))
-                   (cond ((= s1 ?1) t)
-                         ((= s1 ?2) t)
-                         ((= s1 ?3) t)
-                         ((= s1 ?4) t)
-                         (t status))))))
-
 (defun executable-exists-p (exec-name)
   "Check if the given executable (EXEC-NAME) exists."
   (unless (stringp exec-name)
@@ -276,254 +178,6 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 ;; --------------------------------------------------------------------------------
 
 
-(defun init-detect-system-capabilities ()
-  "Detect the current system.  Run this first."
-  (when (url-resolves-p init-test-url)      (add-cap "internet"))
-
-  (cond ((eq system-type 'gnu/linux)        (add-cap "system-linux"))
-        ((eq system-type 'darwin)           (add-cap "system-osx"))
-        ((eq system-type 'windows-nt)       (add-cap "system-windows"))
-        ((eq system-type 'ms-dos)           (add-cap "system-msdos"))
-        ((eq system-type 'cygwin)           (add-cap "system-cygwin"))
-        ((eq system-type 'gnu)              (add-cap "system-unix"))
-        ((eq system-type 'gnu/kfreebsd)     (add-cap "system-unix"))
-        ((eq system-type 'aix)              (add-cap "system-unix"))
-        ((eq system-type 'irix)             (add-cap "system-unix"))
-        ((eq system-type 'hpux)             (add-cap "system-unix"))
-        ((eq system-type 'usg-unix-v)       (add-cap "system-unix"))
-        ((eq system-type 'berkeley-unix)    (add-cap "system-unix"))
-        (t                                  (add-cap "system-unknown")))
-  (when (or (capabilityp "system-unix")
-            (capabilityp "system-linux")
-            (capabilityp "system-cygwin")
-            (capabilityp "system-osx"))     (add-cap "system-posix")))
-
-(defun init-detect-graphical-capabilities ()
-  "Detect graphical and font capabilities."
-  (when (display-graphic-p)                 (add-cap "graphics"))
-
-  (when (capabilityp "graphics")
-    (when (capabilityp "system-linux")      (add-cap "graphics-x11"))
-    (when (capabilityp "system-unix")       (add-cap "graphics-x11"))
-    (when (capabilityp "system-windows")    (add-cap "graphics-w32"))
-    (when (capabilityp "system-osx")        (add-cap "graphics-osx")))
-
-  (when (capabilityp "graphics")
-    (when (x-list-fonts "Inconsolata")      (add-cap "font-inconsolata"))
-    (when (x-list-fonts "Menlo")            (add-cap "font-menlo"))
-    (when (x-list-fonts "Meslo")            (add-cap "font-meslo"))
-    (when (x-list-fonts "DejaVu Sans Mono") (add-cap "font-dejavu"))
-    (when (x-list-fonts "FreeMono")         (add-cap "font-freefont"))
-    (when (x-list-fonts "Liberation Mono")  (add-cap "font-liberation"))
-    (when (x-list-fonts "Source Code Pro")  (add-cap "font-sourcecodepro"))
-    (when (x-list-fonts "Luxi Mono")        (add-cap "font-luxi"))
-    (when (x-list-fonts "Consolas")         (add-cap "font-consolas"))))
-
-(defun init-detect-emacs-capabilities ()
-  "Detect the version of Emacs running."
-  (cond ((lucid-emacs-p)                    (add-cap "emacs-lucid"))
-        (t                                  (add-cap "emacs-gnu"))))
-
-(defun init-detect-vcs-capabilities ()
-  "Detect available VCS systems."
-  (when (executable-exists-p "git")         (add-cap "vcs-git"))
-  (when (executable-exists-p "cvs")         (add-cap "vcs-cvs"))
-  (when (executable-exists-p "svn")         (add-cap "vcs-svn"))
-  (when (executable-exists-p "hg")          (add-cap "vcs-hg"))
-  (when (executable-exists-p "darcs")       (add-cap "vcs-darcs"))
-  (when (executable-exists-p "bzr")         (add-cap "vcs-bzr")))
-
-(defun init-detect-build-capabilities ()
-  "Detect available build tools."
-  (when (capabilityp "system-windows")      (add-cap "build-sln"))
-  (when (executable-exists-p "make")        (add-cap "build-make"))
-  (when (executable-exists-p "cmake")       (add-cap "build-make"))
-  (when (executable-exists-p "latexmk")     (add-cap "build-latexmk"))
-  (when (executable-exists-p "ant")         (add-cap "build-ant"))
-  (when (executable-exists-p "mvn")         (add-cap "build-maven"))
-  (when (executable-exists-p "gradle")      (add-cap "build-gradle"))
-  (when (executable-exists-p "sbt")         (add-cap "build-sbt"))
-  (when (executable-exists-p "cask")        (add-cap "build-cask"))
-  (when (executable-exists-p "lein")        (add-cap "build-leiningen")))
-
-(defun init-detect-package-manager-capabilities ()
-  "Detect available package management systems."
-  (when (executable-exists-p "apt-get")     (add-cap "package-apt"))
-  (when (executable-exists-p "emerge")      (add-cap "package-emerge"))
-  (when (executable-exists-p "pacman")      (add-cap "package-pacman"))
-  (when (executable-exists-p "yum")         (add-cap "package-yum"))
-  (when (executable-exists-p "ipkg")        (add-cap "package-ipkg"))
-  (when (executable-exists-p "opkg")        (add-cap "package-opkg"))
-  (when (executable-exists-p "pkcon")       (add-cap "package-pkcon"))
-  (when (executable-exists-p "nix-env")     (add-cap "package-nix"))
-  (when (executable-exists-p "brew")        (add-cap "package-brew"))
-  (when (executable-exists-p "wpkg")        (add-cap "package-wpkg"))
-  (when (executable-exists-p "0install")    (add-cap "package-0install"))
-
-  (when (executable-exists-p "cpan")        (add-cap "package-cpan"))
-  (when (executable-exists-p "pip")         (add-cap "package-pip"))
-  (when (executable-exists-p "gem")         (add-cap "package-gem"))
-  (when (executable-exists-p "bower")       (add-cap "package-bower"))
-  (when (executable-exists-p "npm")         (add-cap "package-npm"))
-  (when (executable-exists-p "cabal")       (add-cap "package-cabal"))
-  (when (executable-exists-p "stack")       (add-cap "package-stack"))
-  (when (executable-exists-p "opam")        (add-cap "package-opam"))
-  (when (executable-exists-p "rebar")       (add-cap "package-rebar"))
-  (when (executable-exists-p "cargo")       (add-cap "package-cargo"))
-  (when (executable-exists-p "mingw-get")   (add-cap "package-mingw"))
-  (when (executable-exists-p "composer")    (add-cap "package-composer"))
-  (when (executable-exists-p "dub")         (add-cap "package-dub")))
-
-(defun init-detect-dsl-lang-capabilities ()
-  "Detect available domain specific language compilers/interpreters."
-  (when (capabilityp "system-osx")          (add-cap "lang-applescript"))
-  (when (capabilityp "system-windows")      (add-cap "lang-powershell"))
-  (when (capabilityp "system-windows")      (add-cap "lang-msdos"))
-  (when (executable-exists-p "httpd")       (add-cap "lang-apache"))
-  (when (executable-exists-p "nagios")      (add-cap "lang-nagios"))
-  (when (executable-exists-p "nginx")       (add-cap "lang-nginx"))
-  (when (executable-exists-p "puppet")      (add-cap "lang-puppet"))
-  (when (executable-exists-p "syslogd")     (add-cap "lang-syslog"))
-  (when (executable-exists-p "syslog-ng")   (add-cap "lang-syslog"))
-  (when (executable-exists-p "systemctl")   (add-cap "lang-syslog"))
-  (when (executable-exists-p "systemctl")   (add-cap "lang-systemd"))
-  (when (executable-exists-p "varnishd")    (add-cap "lang-varnish"))
-  (when (executable-exists-p "cron")        (add-cap "lang-crontab"))
-  (when (executable-exists-p "anacron")     (add-cap "lang-crontab"))
-
-  (when (executable-exists-p "arduino")     (add-cap "lang-arduino"))
-  (when (executable-exists-p "iverilog")    (add-cap "lang-verilog"))
-
-  (when (executable-exists-p "blender")     (add-cap "lang-blender-python"))
-  (when (executable-exists-p "povray")      (add-cap "lang-povray"))
-
-  (when (executable-exists-p "bison")       (add-cap "lang-bison"))
-  (when (executable-exists-p "lex")         (add-cap "lang-bison"))
-  (when (executable-exists-p "flex")        (add-cap "lang-bison"))
-  (when (executable-exists-p "yacc")        (add-cap "lang-bison"))
-  (when (executable-exists-p "fortune")     (add-cap "lang-fortune"))
-  (when (executable-exists-p "gengetopt")   (add-cap "lang-gengetopt"))
-  (when (executable-exists-p "gettext")     (add-cap "lang-po"))
-  (when (executable-exists-p "mutt")        (add-cap "lang-muttrc"))
-
-  (when (executable-exists-p "docker")      (add-cap "lang-docker"))
-  (when (executable-exists-p "gyp")         (add-cap "lang-gyp"))
-  (when (executable-exists-p "gnuplot")     (add-cap "lang-gnuplot"))
-  (when (executable-exists-p "dot")         (add-cap "lang-graphviz"))
-
-  (when (executable-exists-p "bc")          (add-cap "lang-bc"))
-  (when (executable-exists-p "matlab")      (add-cap "lang-matlab")) ;; not sure
-  (when (executable-exists-p "sage")        (add-cap "lang-sage"))
-  (when (executable-exists-p "R")           (add-cap "lang-r"))
-
-  (when (executable-exists-p "qmake")       (add-cap "lang-qmake"))
-  (when (executable-exists-p "qtdiag")      (add-cap "lang-qml"))
-
-  (when (executable-exists-p "latex")       (add-cap "lang-latex"))
-  (when (executable-exists-p "lilypond")    (add-cap "lang-lilypond"))
-  (when (executable-exists-p "ledger")      (add-cap "lang-ledger"))
-  (when (executable-exists-p "hledger")     (add-cap "lang-ledger")))
-
-(defun init-detect-imperative-lang-capabilities ()
-  "Detect available imperative compilers/interpreters."
-  (when (executable-exists-p "gcc")         (add-cap "lang-c"))
-  (when (executable-exists-p "clang")       (add-cap "lang-c"))
-  (when (executable-exists-p "g++")         (add-cap "lang-c++"))
-  (when (executable-exists-p "clang++")     (add-cap "lang-c++"))
-  (when (executable-exists-p "gnat")        (add-cap "lang-ada"))
-  (when (executable-exists-p "gfortran")    (add-cap "lang-fortran"))
-  (when (executable-exists-p "gccgo")       (add-cap "lang-go"))
-  (when (executable-exists-p "llc")         (add-cap "lang-llvm"))
-  (when (executable-exists-p "rustc")       (add-cap "lang-rust"))
-  (when (executable-exists-p "nim")         (add-cap "lang-nim"))
-  (when (executable-exists-p "vala")        (add-cap "lang-vala"))
-  (when (executable-exists-p "php")         (add-cap "lang-php"))
-  (when (executable-exists-p "mono")        (add-cap "lang-csharp"))
-  (when (capabilityp "system-windows")      (add-cap "lang-csharp")))
-
-(defun init-detect-jvm-lang-capabilities ()
-  "Detect available JVM compilers/interpreters."
-  (when (executable-exists-p "java")        (add-cap "lang-jvm"))
-  (when (executable-exists-p "javac")       (add-cap "lang-java"))
-  (when (executable-exists-p "gcj")         (add-cap "lang-java"))
-  (when (executable-exists-p "groovy")      (add-cap "lang-groovy"))
-  (when (executable-exists-p "lein")        (add-cap "lang-clojure"))
-  (when (executable-exists-p "sbt")         (add-cap "lang-scala"))
-  (when (executable-exists-p "scalac")      (add-cap "lang-scala")))
-
-(defun init-detect-scripting-lang-capabilities ()
-  "Detect available scripting language compilers/interpreters."
-  (when (executable-exists-p "python")      (add-cap "lang-python"))
-  (when (executable-exists-p "ruby")        (add-cap "lang-ruby"))
-  (when (executable-exists-p "perl")        (add-cap "lang-perl"))
-  (when (executable-exists-p "julia")       (add-cap "lang-julia"))
-  (when (executable-exists-p "jc")          (add-cap "lang-j"))
-  (when (executable-exists-p "io")          (add-cap "lang-io"))
-  (when (executable-exists-p "bash")        (add-cap "lang-bash"))
-  (when (executable-exists-p "zsh")         (add-cap "lang-zsh")))
-
-(defun init-detect-web-lang-capabilities ()
-  "Detect available web language compilers/interpreters."
-  (when (executable-exists-p "lessc")       (add-cap "lang-less"))
-  (when (executable-exists-p "sassc")       (add-cap "lang-sass"))
-  (when (executable-exists-p "opa")         (add-cap "lang-opa"))
-  (when (executable-exists-p "node")        (add-cap "lang-node"))
-  (when (executable-exists-p "psc")         (add-cap "lang-purescript"))
-  (when (executable-exists-p "lsc")         (add-cap "lang-livescript"))
-  (when (executable-exists-p "coffee")      (add-cap "lang-coffeescript")))
-
-(defun init-detect-functional-lang-capabilities ()
-  "Detect available functional language compilers/interpreters."
-  (when (executable-exists-p "ocamlc")      (add-cap "lang-ocaml"))
-  (when (executable-exists-p "erlc")        (add-cap "lang-erlang"))
-  (when (executable-exists-p "ghc")         (add-cap "lang-haskell"))
-  (when (executable-exists-p "idris")       (add-cap "lang-idris"))
-  (when (executable-exists-p "elm")         (add-cap "lang-elm"))
-  (when (executable-exists-p "nix-build")   (add-cap "lang-nix"))
-  (when (executable-exists-p "jc")          (add-cap "lang-j"))
-  (when (executable-exists-p "newlisp")     (add-cap "lang-newlisp"))
-  (when (executable-exists-p "racket")      (add-cap "lang-racket"))
-  (when (executable-exists-p "guile")       (add-cap "lang-guile"))
-  (when (executable-exists-p "chicken")     (add-cap "lang-chicken"))
-  (when (executable-exists-p "lua")         (add-cap "lang-lua"))
-  (when (executable-exists-p "shen")        (add-cap "lang-shen"))
-  (when (executable-exists-p "sml")         (add-cap "lang-sml"))
-  (when (executable-exists-p "polyc")       (add-cap "lang-sml"))
-  (when (executable-exists-p "mlton")       (add-cap "lang-sml"))
-  (when (executable-exists-p "swift")       (add-cap "lang-swift"))
-  (when (executable-exists-p "fsharpc")     (add-cap "lang-fsharp"))
-  (when (executable-exists-p "kompile")     (add-cap "lang-kframework")))
-
-(defun init-detect-misc-capabilities ()
-  "Detect miscellaneous capabilities."
-  (when (executable-exists-p "ocamlfind")   (add-cap "util-ocamlfind"))
-  (when (executable-exists-p "pandoc")      (add-cap "util-pandoc"))
-  (when (executable-exists-p "pmd")         (add-cap "util-pmd"))
-  (when (executable-exists-p "top")         (add-cap "util-top")))
-
-(defun init-detect-all-capabilities ()
-  "Run all the detect-*-capabilities functions."
-  (init-detect-system-capabilities)
-  (init-detect-graphical-capabilities)
-  (init-detect-emacs-capabilities)
-  (init-detect-vcs-capabilities)
-  (init-detect-build-capabilities)
-  (init-detect-package-manager-capabilities)
-  (init-detect-dsl-lang-capabilities)
-  (init-detect-imperative-lang-capabilities)
-  (init-detect-jvm-lang-capabilities)
-  (init-detect-scripting-lang-capabilities)
-  (init-detect-web-lang-capabilities)
-  (init-detect-functional-lang-capabilities)
-  (init-detect-misc-capabilities))
-
-(defun init-detect-capabilities ()
-  "Detect available capabilities."
-  (init-detect-all-capabilities)
-
-  (when (eq nil my-capabilities) (error "Capability detection failed"))
-
-  (message "Available capabilities: %S" my-capabilities))
 
 
 ;; --------------------------------------------------------------------------------
@@ -553,6 +207,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (add-opt "org"                   nil)
   (add-opt "markdown"              nil)
   (add-opt "yaml"                  nil)
+  (add-opt "polymode"              nil)
 
   (add-opt "iedit"                 nil)
   (add-opt "fill-column-indicator" nil)
@@ -572,6 +227,10 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (add-opt "smart-mode-line"       nil)
 
   (add-opt "malabar"               t)
+
+  (add-opt "erc"                   nil)
+  (add-opt "erc-fix"               nil)
+  (add-opt "erc-notifications"     nil)
 
   ;; CONTROVERSIAL DEFAULTS:
 
@@ -647,6 +306,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (optionp "org-trello")                (add-package 'org-trello))
   (when (optionp "yaml")                      (add-package 'yaml-mode))
   (when (optionp "markdown")                  (add-package 'markdown-mode))
+  (when (optionp "polymode")                  (add-package 'polymode))
 
   (when (optionp "rudel")                     (add-package 'rudel))
   (when (optionp "smartparens")               (add-package 'smartparens))
@@ -676,7 +336,7 @@ BODY is the text of the body (e.g.: the HTML of the page)."
   (when (capabilityp "lang-ocaml")            (add-package 'tuareg-mode))
   (when (capabilityp "lang-nix")              (add-package 'nix-mode))
   (when (capabilityp "lang-purescript")       (add-package 'purescript-mode))
-  (when (capabilityp "lang-elm")              (add-package 'elm-mode))
+;;  (when (capabilityp "lang-elm")              (add-package 'elm-mode))
   (when (capabilityp "lang-kframework")       (add-package 'k3-mode))
   (when (capabilityp "lang-chicken")          (add-package 'geiser))
   (when (capabilityp "lang-guile")            (add-package 'geiser))
@@ -742,6 +402,9 @@ BODY is the text of the body (e.g.: the HTML of the page)."
 
   (when (optionp "extras")
     (require 'help-fns+))
+  (when (optionp "polymode")
+    (require 'poly-R)
+    (require 'poly-markdown))
   (when (optionp "flycheck")
     (require 'flycheck))
   (when (optionp "rainbow-delimiters")
@@ -983,8 +646,8 @@ BODY is the text of the body (e.g.: the HTML of the page)."
     ;; Fix C-z weirdness
     (global-unset-key (kbd "C-z"))
     
-    ;; Unset C-x C-b
-    (global-unset-key (kbd "C-x C-b"))
+    ;; Make C-x C-b a synonym for C-x b
+    (global-set-key (kbd "C-x C-b") 'switch-to-buffer)
 
     ;; Add lambda key
     (global-set-key (kbd "C-|") (lambda ()
@@ -1201,9 +864,34 @@ with the buffer in which this was run."
 ;; --------------------------------- miscellaneous --------------------------------
 ;; --------------------------------------------------------------------------------
 
+;; (defun custom-auto-set-away ()
+;;   "Set away message to erc-away-status and clear it if already away."
+;;   (interactive)
+;;   (if (> (/ (string-to-number (shell-command-to-string "/usr/bin/xprintidle")) 1000.0) timeout)
+;;       (when am-here-p
+;;         (message "Going Away")
+;;         (set-buffer "&bitlbee")
+;;         (setq am-here-p nil)
+;;         (erc-cmd-AWAY erc-away-status))
+;;     (unless am-here-p
+;;       (set-buffer "&bitlbee")
+;;       (setq am-here-p t)
+;;       (erc-cmd-AWAY ""))))
 
 (defun init-fix-miscellany ()
   "Fix miscellaneous problems in Emacs."
+  (when (optionp "erc")
+    (require 'erc)
+    (when (optionp "erc-fix")
+
+      
+      (add-to-list 'erc-modules 'readonly)
+      (add-to-list 'erc-modules 'ring)
+      (add-to-list 'erc-modules 'spelling)
+      )
+    (when (optionp "erc-notifications")
+      (add-to-list 'erc-modules 'notifications)))
+  
   (when (optionp "fix-emacs-cruft")
     ;; Autosave into ~/.emacs.d/backups
     (setq backup-directory-alist
@@ -1240,7 +928,6 @@ with the buffer in which this was run."
       (ignore-errors (apply run-funcs nil)))))
 
 (init-run-functions '(init-check-prerequisites
-                      init-detect-capabilities
                       init-customize-options
                       init-generate-packages
                       init-setup-el-get
