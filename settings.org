@@ -1,10 +1,26 @@
+* Header
+** Licensing
+This file is not part of GNU Emacs.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+** Commentary
+This code is responsible for initializing all my Emacs configuration settings.
+
+* Code
+** Constants
 #+BEGIN_SRC emacs-lisp +n
-
-;; --------------------------------------------------------------------------------
-;; ---------------------------------- constants -----------------------------------
-;; --------------------------------------------------------------------------------
-
-
 (load-file "~/.emacs.d/detect.el")
 
 (defvar init-profiling-enabled nil) ;; Enable profiling
@@ -20,22 +36,14 @@
 (defvar init-default-font-size 12)
 
 (require 'detect)
-
-
-;; --------------------------------------------------------------------------------
-;; ------------------------------- global variables -------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Global variables
+#+BEGIN_SRC emacs-lisp +n
 (defvar my-options nil)
 (defvar my-packages nil)
-
-
-;; --------------------------------------------------------------------------------
-;; --------------------------- global accessors/mutators --------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Global accessors / mutators
+#+BEGIN_SRC emacs-lisp +n
 (defun add-opt (opt &optional disabled)
   "Add OPT to the set of existing options.
 If DISABLED is true, do nothing."
@@ -68,12 +76,9 @@ If DISABLED is true, do nothing."
 (defun add-to-packages (packages)
   "Add the given PACKAGES to `my-packages'."
   (dolist (element packages) (add-package element)))
-
-
-;; --------------------------------------------------------------------------------
-;; ------------------------------ utility functions -------------------------------
-;; --------------------------------------------------------------------------------
-
+#+END_SRC
+** Utility functions
+#+BEGIN_SRC emacs-lisp +n
 (defun decrement (symbol)
   "Decrement the value held in the variable named SYMBOL."
   (let ((value (symbol-value symbol)))
@@ -153,26 +158,18 @@ If DISABLED is true, do nothing."
 (defun lucid-emacs-p ()
   "Return non-nil if you are running Lucid Emacs."
   (if (string-match "XEmacs\\|Lucid" emacs-version) t nil))
-
-
-;; --------------------------------------------------------------------------------
-;; ----------------------------- check prerequisites ------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Check prerequisites
+#+BEGIN_SRC emacs-lisp +n
 (defun init-check-prerequisites ()
   "Check prerequisites for initialization."
   (setq exec-path (append exec-path init-extra-exec-path))
   
   (unless (executable-exists-p "git")
     (error "Git is not installed")))
-
-
-;; --------------------------------------------------------------------------------
-;; ----------------------------------- options ------------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Options
+#+BEGIN_SRC emacs-lisp +n
 ;; EDIT THESE TO YOUR SATISFACTION
 
 (defun init-customize-options ()
@@ -252,25 +249,17 @@ If DISABLED is true, do nothing."
   (add-opt "undo-tree"             t)
 
   (message "Available options: %S" my-options))
-
-
-;; --------------------------------------------------------------------------------
-;; ---------------------------------- cedet fix -----------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** CEDET fix
+#+BEGIN_SRC emacs-lisp +n
 ;;(require 'cl)
 
 ;;(when (file-accessible-directory-p "~/.emacs.d/el-get/cedet-devel")
 ;;  (setq load-path (cl-remove-if (lambda (x) (string-match-p "cedet" x)) load-path))
 ;;  (load-file "~/.emacs.d/el-get/cedet-devel/cedet-devel-load.el"))
-
-
-;; --------------------------------------------------------------------------------
-;; ----------------------------------- packages -----------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Packages
+#+BEGIN_SRC emacs-lisp +n
 (defun init-generate-packages ()
   "Generate the list of packages to install."
   (add-to-packages '(cedet-devel el-get let-alist tramp diminish delight))
@@ -345,17 +334,12 @@ If DISABLED is true, do nothing."
 
   (message "Packages to install: %s" my-packages))
 
-
-;; --------------------------------------------------------------------------------
-;; --------------------------------- el-get setup ---------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** el-get setup
+#+BEGIN_SRC emacs-lisp +n
 (defun init-setup-el-get ()
   "Check if el-get is installed, and, if not, install it."
   (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
-
-
   
   (unless (require 'el-get nil t)
     (unless (capabilityp "internet")
@@ -384,17 +368,14 @@ If DISABLED is true, do nothing."
 (defun init-update-packages ()
   "Update all packages."
   (el-get-update-all))
-
-
-;; --------------------------------------------------------------------------------
-;; ----------------------------- require misc modules -----------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Require miscellaneous modules
+#+BEGIN_SRC emacs-lisp +n
 (defun init-require-modules ()
   "Require necessary modules for init.el."
   (require 'term)
-
+  (when (optionp "erc")
+    (require 'erc))
   (when (optionp "extras")
     (require 'help-fns+))
   (when (optionp "polymode")
@@ -437,13 +418,9 @@ If DISABLED is true, do nothing."
     (require 'hi2))
 
   (when (capabilityp "exec-lilypond") (require 'lilypond-mode)))
-
-
-;; --------------------------------------------------------------------------------
-;; ----------------------------------- themeing -----------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Theming
+#+BEGIN_SRC emacs-lisp +n
 (defun init-theme-options ()
   "Initialize graphical/theme-related options."
 
@@ -539,13 +516,9 @@ If DISABLED is true, do nothing."
   (when (optionp "smart-mode-line")
     (setq-default sml/no-confirm-load-theme t)
     (sml/setup)))
-
-
-;; --------------------------------------------------------------------------------
-;; ------------------------------------ editing -----------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Editing
+#+BEGIN_SRC emacs-lisp +n
 (defun init-editing-options ()
   "Initialize editing options."
 
@@ -624,13 +597,9 @@ If DISABLED is true, do nothing."
   (when (and (capabilitiesp '("exec-jdk" "exec-groovy" "exec-gradle"))
              (optionp "malabar"))
     (add-hook 'after-init-hook 'activate-malabar-mode)))
-
-
-;; --------------------------------------------------------------------------------
-;; ---------------------------------- keybindings ---------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Keybindings
+#+BEGIN_SRC emacs-lisp +n
 (defun init-keyboard-options ()
   "Initialize keyboard options."
 
@@ -770,13 +739,9 @@ If DISABLED is true, do nothing."
       haskell-interactive-mode-map
       (kbd "C-c C-t")
       'haskell-mode-show-type-at)))
-
-
-;; --------------------------------------------------------------------------------
-;; ---------------------------- hook utility functions ----------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Hook utility functions
+#+BEGIN_SRC emacs-lisp +n
 (defun hook-select-flycheck-checker (checker)
   "Select a flycheck checker (CHECKER) in a hook."
   `(lambda () (interactive) (flycheck-select-checker ',checker)))
@@ -833,13 +798,9 @@ with the buffer in which this was run."
             (goto-char start)
             (re-search-forward "^\\(.*\\)\n\\(\\(.*\n\\)*\\)\\1\n" end t))
         (replace-match "\\1\n\\2")))))
-
-
-;; --------------------------------------------------------------------------------
-;; ------------------------------------- hooks ------------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Hooks
+#+BEGIN_SRC emacs-lisp +n
 (defun init-hooks ()
   "Initialize hook options."
   (when (and (optionsp '("offlineimap" "wanderlust-email"))
@@ -856,40 +817,19 @@ with the buffer in which this was run."
   (add-hook 'haskell-mode-hook             'turn-on-hi2)
   (add-hook 'haskell-mode-hook             'interactive-haskell-mode)
   (add-hook 'flycheck-mode-hook            'flycheck-haskell-setup))
+#+END_SRC
+** Miscellaneous
+#+BEGIN_SRC emacs-lisp +n
+(when (optionp "erc-fix")
+  (add-to-list 'erc-modules 'readonly)
+  (add-to-list 'erc-modules 'ring)
+  (add-to-list 'erc-modules 'spelling))
 
-
-;; --------------------------------------------------------------------------------
-;; --------------------------------- miscellaneous --------------------------------
-;; --------------------------------------------------------------------------------
-
-;; (defun custom-auto-set-away ()
-;;   "Set away message to erc-away-status and clear it if already away."
-;;   (interactive)
-;;   (if (> (/ (string-to-number (shell-command-to-string "/usr/bin/xprintidle")) 1000.0) timeout)
-;;       (when am-here-p
-;;         (message "Going Away")
-;;         (set-buffer "&bitlbee")
-;;         (setq am-here-p nil)
-;;         (erc-cmd-AWAY erc-away-status))
-;;     (unless am-here-p
-;;       (set-buffer "&bitlbee")
-;;       (setq am-here-p t)
-;;       (erc-cmd-AWAY ""))))
+(when (optionp "erc-notifications")
+  (add-to-list 'erc-modules 'notifications))
 
 (defun init-fix-miscellany ()
-  "Fix miscellaneous problems in Emacs."
-  (when (optionp "erc")
-    (require 'erc)
-    (when (optionp "erc-fix")
-
-      
-      (add-to-list 'erc-modules 'readonly)
-      (add-to-list 'erc-modules 'ring)
-      (add-to-list 'erc-modules 'spelling)
-      )
-    (when (optionp "erc-notifications")
-      (add-to-list 'erc-modules 'notifications)))
-  
+  "Fix miscellaneous problems in Emacs."  
   (when (optionp "fix-emacs-cruft")
     ;; Autosave into ~/.emacs.d/backups
     (setq backup-directory-alist
@@ -905,13 +845,9 @@ with the buffer in which this was run."
     
     ;; Enable the upcase-region command
     (put 'upcase-region 'disabled nil)))
-
-
-;; --------------------------------------------------------------------------------
-;; -------------------------------- run everything --------------------------------
-;; --------------------------------------------------------------------------------
-
-
+#+END_SRC
+** Run everything
+#+BEGIN_SRC emacs-lisp +n
 (defun init-run-functions (functions)
   "Run some FUNCTIONS with profiling/debug/errors depending on the settings."
   (unless (listp functions)
@@ -938,7 +874,94 @@ with the buffer in which this was run."
                       init-fix-miscellany))
 
 (setq-default flycheck-emacs-lisp-load-path load-path)
-
+#+END_SRC
+** Commented out code for backup
+#+BEGIN_SRC emacs-lisp +n
+;; (defgroup erc-away nil
+;;   "Automatically set yourself as away through various means."
+;;   :group 'erc)
+;;  
+;; (defcustom erc-away-check-idle-time-command t
+;;   "The shell command to run to determine the current idle time."
+;;   "xprintidle-ng"
+;;   :type 'string
+;;   :group 'erc-away)
+;;  
+;; (defcustom erc-away-idle-timeout t
+;;   "The amount of time in seconds a user must be idle to trigger an away status."
+;;   240
+;;   :type 'number
+;;   :group 'erc-away)
+;;  
+;; (defcustom erc-away-check-delay t
+;;   "The amount of time in seconds between idle time checks."
+;;   60
+;;   :type 'number
+;;   :group 'erc-away)
+;;  
+;; (defcustom erc-away-message t
+;;   "The away message to set automatically with `erc-away'."
+;;   "Currently AFK."
+;;   :type 'string
+;;   :group 'erc-away)
+;;  
+;; (defvar erc-away-initialize-hook nil
+;;   "This hook is run when `erc-away' is initialized.")
+;;  
+;; (defvar erc-away-pre-leave-hook nil
+;;   "This hook is run before `erc-away' sets you as having left.")
+;;  
+;; (defvar erc-away-pre-return-hook nil
+;;   "This hook is run before `erc-away' sets you as having returned.")
+;;  
+;; (defvar erc-away-post-leave-hook nil
+;;   "This hook is run after `erc-away' sets you as having left.")
+;;  
+;; (defvar erc-away-post-return-hook nil
+;;   "This hook is run after `erc-away' sets you as having returned.")
+;;  
+;; (defun erc-away/check-idle-time-command ()
+;;   "Return the output of running `erc-away-check-idle-time-command' in a shell."
+;;   (shell-command-to-string erc-away-check-idle-time-command))
+;;  
+;; (defun erc-away/get-idle-time ()
+;;   "Get the current idle time in seconds by parsing the output of 
+;; `erc-away/check-idle-time-command'."
+;;   (/ (string-to-number (erc-away/check-idle-time-command))
+;;      1000.0))
+;;  
+;; (defun erc-away/idlep ()
+;;   "Is the user currently away according to `erc-away'?"
+;;   (> (erc-away/get-idle-time) erc-away-idle-timeout))
+;;  
+;; (defun erc-away/awayp ()
+;;   "Is the user currently away on IRC?"
+;;   (if (erc-away-time) t nil))
+;;  
+;; (defun erc-away/leave ()
+;;   "Set yourself as away."
+;;   (run-hooks 'erc-away-pre-leave-hook)
+;;   (erc-cmd-AWAY erc-away-message)
+;;   (run-hooks 'erc-away-post-leave-hook))
+;;  
+;; (defun erc-away/return ()
+;;   "Unset yourself as away."
+;;   (run-hooks 'erc-away-pre-return-hook)
+;;   (erc-cmd-AWAY "")
+;;   (run-hooks 'erc-away-post-return-hook))
+;;  
+;; (defun erc-away/sync-away ()
+;;   "If we are currently idle, and we are not away on IRC, run `erc-away/leave'.
+;; If we are not currently idle, and we are away on IRC, run `erc-away/return'."
+;;   (let ((erc-is-away (erc-away/erc-awayp)))
+;;     (if (erc-away/idlep)
+;;         (when erc-is-away (erc-away/leave))
+;;       (unless erc-is-away (erc-away/return))))
+;;  
+;; (defun erc-away/initialize ()
+;;   (run-hooks 'erc-away-initialize-hook)
+;;   (run-at-time t erc-away-check-delay 'erc-away/sync-away))
+;; 
 ;; (quail-define-rules
 ;;  ("\\fraka" #X1D586) 
 ;;  ("\\frakb" #X1D587) 
@@ -992,6 +1015,4 @@ with the buffer in which this was run."
 ;;  ("\\frakX" #X1D583) 
 ;;  ("\\frakY" #X1D584) 
 ;;  ("\\frakZ" #X1D585))
-
-
 #+END_SRC
