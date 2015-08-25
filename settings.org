@@ -193,6 +193,7 @@ If DISABLED is true, do nothing."
   (add-opt 'yaml                  nil)
   (add-opt 'polymode              nil)
 
+  (add-opt 'subword               nil)
   (add-opt 'iedit                 nil)
   (add-opt 'fill-column-indicator nil)
   (add-opt 'fill-column-80        nil)
@@ -520,7 +521,7 @@ If DISABLED is true, do nothing."
   "Initialize editing options."
 
   ;; Move by subword in CamelCase
-  (when (optionp 'autorevert)
+  (when (optionp 'subword)
     (global-subword-mode))
 
   ;; Auto-revert buffers every so often
