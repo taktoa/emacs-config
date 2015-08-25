@@ -63,7 +63,6 @@ If DISABLED is true, do nothing."
         (throw 'return nil)))
     (throw 'return t)))
 
-
 (defun packagep (package)
   "Is the given PACKAGE installed?"
   (member package my-packages))
@@ -175,77 +174,77 @@ If DISABLED is true, do nothing."
 (defun init-customize-options ()
   "Initialize the my-options variable with your customizations."
 
-  (add-opt "extras"                nil) ;; typically very unobjectionable stuff
-  
-  (add-opt "ace-jump-mode"         nil)
-  (add-opt "speedbar"              nil)
-  (add-opt "sr-speedbar"           t)
-  (add-opt "projectile"            nil)
-  (add-opt "perspective"           nil)
-  (add-opt "autorevert"            nil)
-  (add-opt "company"               nil)
-  (add-opt "flycheck"              nil)
-  (add-opt "smex"                  nil)
-  (add-opt "helm"                  nil)
-  (add-opt "rudel"                 t)
+  (add-opt 'extras                nil) ;; typically very unobjectionable stuff
 
-  (add-opt "org"                   nil)
-  (add-opt "markdown"              nil)
-  (add-opt "yaml"                  nil)
-  (add-opt "polymode"              nil)
+  (add-opt 'ace-jump-mode         nil)
+  (add-opt 'speedbar              nil)
+  (add-opt 'sr-speedbar           t)
+  (add-opt 'projectile            nil)
+  (add-opt 'perspective           nil)
+  (add-opt 'autorevert            nil)
+  (add-opt 'company               nil)
+  (add-opt 'flycheck              nil)
+  (add-opt 'smex                  nil)
+  (add-opt 'helm                  nil)
+  (add-opt 'rudel                 t)
 
-  (add-opt "iedit"                 nil)
-  (add-opt "fill-column-indicator" nil)
-  (add-opt "fill-column-80"        nil)
-  (add-opt "multi-term"            nil)
-  (add-opt "rainbow-delimiters"    nil)
+  (add-opt 'org                   nil)
+  (add-opt 'markdown              nil)
+  (add-opt 'yaml                  nil)
+  (add-opt 'polymode              nil)
 
-  (add-opt "smartparens"           nil)
+  (add-opt 'iedit                 nil)
+  (add-opt 'fill-column-indicator nil)
+  (add-opt 'fill-column-80        nil)
+  (add-opt 'multi-term            nil)
+  (add-opt 'rainbow-delimiters    nil)
 
-  (add-opt "fix-emacs-cruft"       nil)
+  (add-opt 'smartparens           nil)
 
-  (add-opt "line-numbers"          nil)
-  (add-opt "powerline"             nil)
-  (add-opt "smart-mode-line"       nil)
+  (add-opt 'fix-emacs-cruft       nil)
 
-  (add-opt "malabar"               t)
+  (add-opt 'line-numbers          nil)
+  (add-opt 'powerline             nil)
+  (add-opt 'smart-mode-line       nil)
 
-  (add-opt "erc"                   nil)
-  (add-opt "erc-fix"               nil)
-  (add-opt "erc-notifications"     nil)
+  (add-opt 'malabar               t)
+
+  (add-opt 'erc                   nil)
+  (add-opt 'erc-fix               nil)
+  (add-opt 'erc-notifications     nil)
 
   ;; CONTROVERSIAL DEFAULTS:
 
   ;; Email
-  (add-opt "wanderlust-email"      nil)
-  (add-opt "offlineimap"           nil)
+  (add-opt 'wanderlust-email      nil)
+  (add-opt 'offlineimap           nil)
 
   ;; Window keybinds
-  (add-opt "meta-switch-windows"   nil)
-  (add-opt "super-resize-windows"  nil)
+  (add-opt 'meta-switch-windows   nil)
+  (add-opt 'super-resize-windows  nil)
 
   ;; Theming
-  (add-opt "custom-fonts"          nil)
-  (add-opt "solarized-dark"        t)
-  (add-opt "solarized-light"       t)
-  (add-opt "zenburn"               nil)
-  (add-opt "thin-cursor"           nil)
+  (add-opt 'custom-fonts          nil)
+  (add-opt 'solarized-dark        t)
+  (add-opt 'solarized-light       t)
+  (add-opt 'zenburn               nil)
+  (add-opt 'thin-cursor           nil)
 
   ;; Editor keybinds
-  (add-opt "free-up-keys"          nil)
-  (add-opt "comint-arrow-history"  nil)
-  (add-opt "nano-yank-kill"        nil)
-  (add-opt "cua-mode"              nil)
+  (add-opt 'free-up-keys          nil)
+  (add-opt 'comint-arrow-history  nil)
+  (add-opt 'nano-yank-kill        nil)
+  (add-opt 'cua-mode              nil)
 
   ;; Indentation
-  (add-opt "indent-spaces"         nil)
-  (add-opt "electric-indent"       nil)
-  (add-opt "haskell-indent-simple" t)
-  (add-opt "sane-c-tab-width"      nil)
+  (add-opt 'indent-spaces         nil)
+  (add-opt 'electric-indent       nil)
+  (add-opt 'haskell-indent-simple t)
+  (add-opt 'sane-c-tab-width      nil)
 
   ;; Misc
-  (add-opt "term-mode-switch"      nil)
-  (add-opt "undo-tree"             t)
+  (add-opt 'term-mode-switch      nil)
+  (add-opt 'undo-tree             t)
 
   (message "Available options: %S" my-options))
 #+END_SRC
@@ -263,44 +262,44 @@ If DISABLED is true, do nothing."
   "Generate the list of packages to install."
   (add-to-packages '(cedet-devel el-get let-alist tramp diminish delight))
 
-  (when (optionp "extras")                (add-package 'help-fns+)
+  (when (optionp 'extras)                 (add-package 'help-fns+)
                                           (add-package 'git-auto-commit-mode))
 
-  (when (optionp "perspective")           (add-package 'perspective))
-  (when (optionp "projectile")            (add-package 'projectile))
+  (when (optionp 'perspective)            (add-package 'perspective))
+  (when (optionp 'projectile)             (add-package 'projectile))
 
-  (when (optionp "iedit")                 (add-package 'iedit))
-  (when (optionp "fill-column-indicator") (add-package 'fill-column-indicator))
-  (when (optionp "multi-term")            (add-package 'multi-term))
-  (when (optionp "rainbow-delimiters")    (add-package 'rainbow-delimiters))
-  (when (optionp "sr-speedbar")           (add-package 'sr-speedbar))
-  (when (optionp "ace-jump-mode")         (add-package 'ace-jump-mode))
+  (when (optionp 'iedit)                  (add-package 'iedit))
+  (when (optionp 'fill-column-indicator)  (add-package 'fill-column-indicator))
+  (when (optionp 'multi-term)             (add-package 'multi-term))
+  (when (optionp 'rainbow-delimiters)     (add-package 'rainbow-delimiters))
+  (when (optionp 'sr-speedbar)            (add-package 'sr-speedbar))
+  (when (optionp 'ace-jump-mode)          (add-package 'ace-jump-mode))
 
-  (when (optionp "wanderlust-email")      (add-package 'wanderlust))
-  (when (optionp "offlineimap")           (add-package 'offlineimap))
+  (when (optionp 'wanderlust-email)       (add-package 'wanderlust))
+  (when (optionp 'offlineimap)            (add-package 'offlineimap))
 
-  (when (optionp "org")                   (add-package 'org-mode))
-  (when (optionp "org-trello")            (add-package 'org-trello))
-  (when (optionp "yaml")                  (add-package 'yaml-mode))
-  (when (optionp "markdown")              (add-package 'markdown-mode))
-  (when (optionp "polymode")              (add-package 'polymode))
+  (when (optionp 'org)                    (add-package 'org-mode))
+  (when (optionp 'org-trello)             (add-package 'org-trello))
+  (when (optionp 'yaml)                   (add-package 'yaml-mode))
+  (when (optionp 'markdown)               (add-package 'markdown-mode))
+  (when (optionp 'polymode)               (add-package 'polymode))
 
-  (when (optionp "rudel")                 (add-package 'rudel))
-  (when (optionp "smartparens")           (add-package 'smartparens))
-  (when (optionp "flycheck")              (add-package 'flycheck))
-  (when (optionp "undo-tree")             (add-package 'undo-tree))
+  (when (optionp 'rudel)                  (add-package 'rudel))
+  (when (optionp 'smartparens)            (add-package 'smartparens))
+  (when (optionp 'flycheck)               (add-package 'flycheck))
+  (when (optionp 'undo-tree)              (add-package 'undo-tree))
 
-  (when (or (optionp "solarized-dark")
-            (optionp "solarized-light"))  (add-package 'color-theme-solarized))
-  (when (optionp "zenburn")               (add-package 'color-theme-zenburn))
-  (when (optionp "powerline")             (add-package 'powerline))
-  (when (optionp "smart-mode-line")       (add-package 'smart-mode-line))
+  (when (or (optionp 'solarized-dark)
+            (optionp 'solarized-light))   (add-package 'color-theme-solarized))
+  (when (optionp 'zenburn)                (add-package 'color-theme-zenburn))
+  (when (optionp 'powerline)              (add-package 'powerline))
+  (when (optionp 'smart-mode-line)        (add-package 'smart-mode-line))
 
-  (when (optionp "smex")                  (add-package 'smex))
-  (when (optionp "company")               (add-package 'company-mode))
-  (when (optionp "yasnippet")             (add-package 'yasnippet))
-  (when (optionp "helm")                  (add-package 'helm))
-  (when (optionp "flx")                   (add-to-packages '(flx flx-ido)))
+  (when (optionp 'smex)                   (add-package 'smex))
+  (when (optionp 'company)                (add-package 'company-mode))
+  (when (optionp 'yasnippet)              (add-package 'yasnippet))
+  (when (optionp 'helm)                   (add-package 'helm))
+  (when (optionp 'flx)                    (add-to-packages '(flx flx-ido)))
 
   (when (capabilityp "lang-haskell")      (add-to-packages '(haskell-mode
                                                              flycheck-haskell
@@ -327,12 +326,11 @@ If DISABLED is true, do nothing."
                                                              javadoc-lookup
                                                              javaimp)))
   (when (and (capabilitiesp '("lang-java" "lang-groovy" "build-gradle"))
-             (optionp "malabar"))         (add-package 'malabar-mode))
+             (optionp 'malabar))          (add-package 'malabar-mode))
 
   (delete-dups my-packages)
 
   (message "Packages to install: %s" my-packages))
-
 #+END_SRC
 ** el-get setup
 #+BEGIN_SRC emacs-lisp +n
@@ -373,41 +371,41 @@ If DISABLED is true, do nothing."
 (defun init-require-modules ()
   "Require necessary modules for init.el."
   (require 'term)
-  (when (optionp "erc")
+  (when (optionp 'erc)
     (require 'erc))
-  (when (optionp "extras")
+  (when (optionp 'extras)
     (require 'help-fns+))
-  (when (optionp "polymode")
+  (when (optionp 'polymode)
     (require 'poly-R)
     (require 'poly-markdown))
-  (when (optionp "flycheck")
+  (when (optionp 'flycheck)
     (require 'flycheck))
-  (when (optionp "rainbow-delimiters")
+  (when (optionp 'rainbow-delimiters)
     (require 'rainbow-delimiters))
-  (when (optionp "smartparens")
+  (when (optionp 'smartparens)
     (require 'smartparens-config))
-  (when (optionp "powerline")
+  (when (optionp 'powerline)
     (require 'powerline))
-  (when (optionp "smart-mode-line")
+  (when (optionp 'smart-mode-line)
     (require 'smart-mode-line))
-  (when (optionp "smex")
+  (when (optionp 'smex)
     (require 'smex))
-  (when (optionp "company")
+  (when (optionp 'company)
     (require 'company))
-  (when (optionp "ace-jump-mode")
+  (when (optionp 'ace-jump-mode)
     (require 'ace-jump-mode))
-  (when (optionp "helm")
+  (when (optionp 'helm)
     (require 'helm))
-  (when (optionp "sr-speedbar")
+  (when (optionp 'sr-speedbar)
     (require 'sr-speedbar))
-  (when (optionp "perspective")
+  (when (optionp 'perspective)
     (require 'perspective))
-  (when (and (optionp "projectile")
-             (optionp "perspective"))
+  (when (and (optionp 'projectile)
+             (optionp 'perspective))
     (require 'persp-projectile))
-  (when (optionp "comint-arrow-history")
+  (when (optionp 'comint-arrow-history)
     (require 'comint))
-  (when (optionp "undo-tree")
+  (when (optionp 'undo-tree)
     (require 'undo-tree))
 
   (when (capabilityp "exec-haskell")
@@ -424,7 +422,7 @@ If DISABLED is true, do nothing."
   "Initialize graphical/theme-related options."
 
   ;; Disable various annoyances that come with Emacs
-  (when (and (capabilityp "graphics") (optionp "fix-emacs-cruft"))
+  (when (and (capabilityp "graphics") (optionp 'fix-emacs-cruft))
     (setq inhibit-splash-screen t)
     (column-number-mode 1)
     (tool-bar-mode -1)
@@ -432,7 +430,7 @@ If DISABLED is true, do nothing."
     (menu-bar-mode -1))
 
   ;; Set default frame font
-  (when (and (capabilityp "graphics") (optionp "custom-fonts"))
+  (when (and (capabilityp "graphics") (optionp 'custom-fonts))
     (defvar init-default-font
       (cond ((capabilityp "font-inconsolata")   "Inconsolata")
             ((capabilityp "font-menlo")         "Menlo")
@@ -449,7 +447,7 @@ If DISABLED is true, do nothing."
                                     init-default-font-size)))))
 
   ;; Line numbers
-  (when (and (capabilityp "graphics") (optionp "line-numbers"))
+  (when (and (capabilityp "graphics") (optionp 'line-numbers))
     (line-number-mode 1)
     (global-hl-line-mode)
     (global-linum-mode 1)
@@ -461,21 +459,21 @@ If DISABLED is true, do nothing."
     (linum-mode -1))
 
   ;; Disable line numbers for various modes
-  (when (and (capabilityp "graphics") (optionp "line-numbers"))
+  (when (and (capabilityp "graphics") (optionp 'line-numbers))
     (add-hook 'term-mode-hook                  'linum-disable)
     (add-hook 'Info-mode-hook                  'linum-disable)
     (add-hook 'package-menu-mode-hook          'linum-disable)
-    (when (optionp "multi-term")
+    (when (optionp 'multi-term)
       (add-hook 'multi-term-mode-hook          'linum-disable))
     (when (capabilityp "exec-haskell")
       (add-hook 'haskell-interactive-mode-hook 'linum-disable))
-    (when (optionp "speedbar")
+    (when (optionp 'speedbar)
       (add-hook 'speedbar-mode-hook            'linum-disable))
-    (when (optionp "sr-speedbar")
+    (when (optionp 'sr-speedbar)
       (add-hook 'sr-speedbar-mode-hook         'linum-disable)))
 
   ;; Set fill-column-indicator to blue and enable in prog-mode
-  (when (optionp "fill-column-indicator")
+  (when (optionp 'fill-column-indicator)
     (add-hook 'prog-mode-hook (lambda ()
                                 (interactive)
                                 (defvar fci-rule-color)
@@ -483,36 +481,36 @@ If DISABLED is true, do nothing."
     (add-hook 'prog-mode-hook 'fci-mode))
 
   ;; Set fill-column to 80 by default
-  (when (optionp "fill-column-80")
+  (when (optionp 'fill-column-80)
     (setq-default fill-column 80))
 
   ;; Disable horizontal autoscroll in sr-speedbar
-  (when (optionp "sr-speedbar")
+  (when (optionp 'sr-speedbar)
     (defvar disable-auto-hscroll (lambda () (setq auto-hscroll-mode nil)))
     (add-hook 'sr-speedbar-mode-hook         disable-auto-hscroll))
 
   ;; Enable zenburn theme
-  (when (optionp "zenburn")
+  (when (optionp 'zenburn)
     (load-theme 'zenburn t))
 
   ;; Enable solarized-light theme
-  (when (optionp "solarized-light")
+  (when (optionp 'solarized-light)
     (load-theme 'solarized-light t))
 
   ;; Enable solarized-dark theme
-  (when (optionp "solarized-dark")
+  (when (optionp 'solarized-dark)
     (load-theme 'solarized-dark t))
 
   ;; Thin cursor
-  (when (and (capabilityp "graphics") (optionp "thin-cursor"))
+  (when (and (capabilityp "graphics") (optionp 'thin-cursor))
     (setq-default cursor-type 'bar))
 
   ;; Enable Powerline modeline
-  (when (optionp "powerline")
+  (when (optionp 'powerline)
     (powerline-default-theme))
 
   ;; Smart mode line
-  (when (optionp "smart-mode-line")
+  (when (optionp 'smart-mode-line)
     (setq-default sml/no-confirm-load-theme t)
     (sml/setup)))
 #+END_SRC
@@ -522,42 +520,42 @@ If DISABLED is true, do nothing."
   "Initialize editing options."
 
   ;; Move by subword in CamelCase
-  (when (optionp "autorevert")
+  (when (optionp 'autorevert)
     (global-subword-mode))
 
   ;; Auto-revert buffers every so often
-  (when (optionp "autorevert")
+  (when (optionp 'autorevert)
     (global-auto-revert-mode)
     (defvar auto-revert-check-vc-info t))
 
   ;; Smarter editing with matching delimiters
-  (when (optionp "smartparens")
+  (when (optionp 'smartparens)
     (smartparens-global-mode)
     (show-smartparens-global-mode))
 
   ;; On-the-fly syntax checking
-  (when (optionp "flycheck")
+  (when (optionp 'flycheck)
     (global-flycheck-mode))
 
   ;; Add multiple "perspectives" for buffers (i.e.: workspaces)
-  (when (optionp "perspective")
+  (when (optionp 'perspective)
     (persp-mode)
     (persp-turn-on-modestring))
 
   ;; Indent automagically
-  (when (optionp "electric-indent")
+  (when (optionp 'electric-indent)
     (electric-indent-mode +1))
 
   ;; Simple indentation for Haskell
-  (when (optionp "haskell-indent-simple")
+  (when (optionp 'haskell-indent-simple)
     (turn-on-haskell-simple-indent))
 
   ;; Better autocompletion
-  (when (optionp "company")
+  (when (optionp 'company)
     (global-company-mode))
 
   ;; Better minibuffer autocompletion
-  (when (optionp "smex")
+  (when (optionp 'smex)
     (smex-initialize))
 
   ;; Available modes for geiser
@@ -576,25 +574,25 @@ If DISABLED is true, do nothing."
     (setq x-select-enable-clipboard t))
 
   ;; Disable indenting with tabs by default
-  (when (optionp "indent-spaces")
+  (when (optionp 'indent-spaces)
     (setq-default indent-tabs-mode nil))
 
   ;; Enable undo-tree
-  (when (optionp "undo-tree")
+  (when (optionp 'undo-tree)
     (global-undo-tree-mode))
 
   ;; Scroll compilation output
   (setq-default compilation-scroll-output t)
 
   ;; Set C tab width to 4
-  (when (optionp "sane-c-tab-width")
+  (when (optionp 'sane-c-tab-width)
     (defvar c-default-style "linux")
     (setq-default c-basic-offset 4
                   tab-width 4))
 
   ;; Enable malabar-mode
   (when (and (capabilitiesp '("exec-jdk" "exec-groovy" "exec-gradle"))
-             (optionp "malabar"))
+             (optionp 'malabar))
     (add-hook 'after-init-hook 'activate-malabar-mode)))
 #+END_SRC
 ** Keybindings
@@ -602,7 +600,7 @@ If DISABLED is true, do nothing."
 (defun init-keyboard-options ()
   "Initialize keyboard options."
 
-  (when (optionp "fix-emacs-cruft")
+  (when (optionp 'fix-emacs-cruft)
     ;; What is this, vim? We don't use <insert> here.
     (global-unset-key (kbd "<insert>"))
 
@@ -638,28 +636,28 @@ If DISABLED is true, do nothing."
     (global-set-key (kbd "M-]") 'align-regexp))
 
   ;; Nano-style line killing/yanking
-  (when (optionp "nano-yank-kill")
+  (when (optionp 'nano-yank-kill)
     (global-set-key (kbd "C-k") 'kill-whole-line)
     (global-set-key (kbd "C-u") 'yank))
 
   ;; Resize windows with super + arrow keys
-  (when (optionp "super-resize-windows")
+  (when (optionp 'super-resize-windows)
     (global-set-key (kbd "s-<left>")  'shrink-window-horizontally)
     (global-set-key (kbd "s-<right>") 'enlarge-window-horizontally)
     (global-set-key (kbd "s-<down>")  'shrink-window)
     (global-set-key (kbd "s-<up>")    'enlarge-window))
 
   ;; Switch windows with meta + arrow keys
-  (when (optionp "meta-switch-windows")
+  (when (optionp 'meta-switch-windows)
     (windmove-default-keybindings 'meta)
     (defvar windmove-wrap-around t))
 
   ;; Free up some keys for keybindings
-  (when (optionp "free-up-keys")
+  (when (optionp 'free-up-keys)
     (global-unset-key (kbd "C-a")))
 
   ;; Up and down arrow work as you would expect for comint shells
-  (when (optionp "comint-arrow-history")
+  (when (optionp 'comint-arrow-history)
     (defun comint-after-character-insert-fix ()
       "Reset point to the terminal prompt, but only in `comint'-derived modes."
       (interactive)
@@ -705,7 +703,7 @@ If DISABLED is true, do nothing."
     (define-key comint-mode-map      (kbd "RET") 'comint-jump-to-end-and-send))
 
   ;; GNU screen-style keybindings for perspective
-  (when (optionp "perspective")
+  (when (optionp 'perspective)
     (global-set-key (kbd "C-a s") 'persp-switch)
     (global-set-key (kbd "C-a b") 'persp-add-buffer)
     (global-set-key (kbd "C-a a") 'persp-rename)
@@ -716,22 +714,22 @@ If DISABLED is true, do nothing."
     (global-set-key (kbd "C-a C-k") 'persp-kill))
 
   ;; Enable smex on M-x, M-X, and <menu>
-  (when (optionp "smex")
+  (when (optionp 'smex)
     (global-set-key (kbd "M-x") 'smex)
     (global-set-key (kbd "M-X") 'smex-major-mode-commands)
     (global-set-key (kbd "<menu>") 'smex))
 
   ;; Enable CUA keybindings
-  (when (optionp "cua-mode")
+  (when (optionp 'cua-mode)
     (cua-mode))
 
   ;; Switch between line and char mode in term with C-'
-  (when (optionp "term-mode-switch")
+  (when (optionp 'term-mode-switch)
     (define-key term-raw-map  (kbd "C-'") 'term-line-mode)
     (define-key term-mode-map (kbd "C-'") 'term-char-mode))
 
   ;; Misc keybindings
-  (when (optionp "ace-jump-mode")
+  (when (optionp 'ace-jump-mode)
     (define-key global-map (kbd "C-c SPC") 'ace-jump-mode))
   (when (capabilityp "exec-haskell")
     (define-key
@@ -802,7 +800,7 @@ with the buffer in which this was run."
 #+BEGIN_SRC emacs-lisp +n
 (defun init-hooks ()
   "Initialize hook options."
-  (when (and (optionsp '("offlineimap" "wanderlust-email"))
+  (when (and (optionsp '(offlineimap wanderlust-email))
              (capabilityp "internet"))
     (add-hook 'wl-hook 'offlineimap))
   (add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
@@ -818,17 +816,17 @@ with the buffer in which this was run."
 #+END_SRC
 ** Miscellaneous
 #+BEGIN_SRC emacs-lisp +n
-(when (optionp "erc-fix")
+(when (optionp 'erc-fix)
   (add-to-list 'erc-modules 'readonly)
   (add-to-list 'erc-modules 'ring)
   (add-to-list 'erc-modules 'spelling))
 
-(when (optionp "erc-notifications")
+(when (optionp 'erc-notifications)
   (add-to-list 'erc-modules 'notifications))
 
 (defun init-fix-miscellany ()
   "Fix miscellaneous problems in Emacs."
-  (when (optionp "fix-emacs-cruft")
+  (when (optionp 'fix-emacs-cruft)
     ;; Autosave into ~/.emacs.d/backups
     (setq backup-directory-alist
           `(("." . ,(expand-file-name "~/.emacs.d/backups"))))
