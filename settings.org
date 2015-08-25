@@ -202,9 +202,6 @@ If DISABLED is true, do nothing."
 
   (add-opt "smartparens"           nil)
 
-  (add-opt "electric-indent"       nil)
-  (add-opt "haskell-simple-indent" nil)
-
   (add-opt "fix-emacs-cruft"       nil)
 
   (add-opt "line-numbers"          nil)
@@ -242,6 +239,8 @@ If DISABLED is true, do nothing."
 
   ;; Indentation
   (add-opt "indent-spaces"         nil)
+  (add-opt "electric-indent"       nil)
+  (add-opt "haskell-indent-simple" t)
   (add-opt "sane-c-tab-width"      nil)
 
   ;; Misc
@@ -549,8 +548,8 @@ If DISABLED is true, do nothing."
   (when (optionp "electric-indent")
     (electric-indent-mode +1))
 
-  ;; Better indenting for Haskell
-  (when (optionp "haskell-simple-indent")
+  ;; Simple indentation for Haskell
+  (when (optionp "haskell-indent-simple")
     (turn-on-haskell-simple-indent))
 
   ;; Better autocompletion
@@ -808,7 +807,6 @@ with the buffer in which this was run."
     (add-hook 'wl-hook 'offlineimap))
   (add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
   (add-hook 'java-mode-hook                (create-dtw-hook))
-  (add-hook 'haskell-mode-hook             (create-dtw-hook))
   (add-hook 'lisp-mode-hook                (create-dtw-hook))
   (add-hook 'scheme-mode-hook              (create-dtw-hook))
   (add-hook 'comint-mode-hook              'make-buffer-unsaveable)
