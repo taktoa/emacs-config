@@ -164,7 +164,7 @@ If DISABLED is true, do nothing."
 (defun init-check-prerequisites ()
   "Check prerequisites for initialization."
   (setq exec-path (append exec-path init-extra-exec-path))
-  
+
   (unless (executable-exists-p "git")
     (error "Git is not installed")))
 #+END_SRC
@@ -174,7 +174,7 @@ If DISABLED is true, do nothing."
 
 (defun init-customize-options ()
   "Initialize the my-options variable with your customizations."
-  
+
   (add-opt "extras"                nil) ;; typically very unobjectionable stuff
   
   (add-opt "ace-jump-mode"         nil)
@@ -278,7 +278,7 @@ If DISABLED is true, do nothing."
 
   (when (optionp "wanderlust-email")      (add-package 'wanderlust))
   (when (optionp "offlineimap")           (add-package 'offlineimap))
-  
+
   (when (optionp "org")                   (add-package 'org-mode))
   (when (optionp "org-trello")            (add-package 'org-trello))
   (when (optionp "yaml")                  (add-package 'yaml-mode))
@@ -339,7 +339,7 @@ If DISABLED is true, do nothing."
 (defun init-setup-el-get ()
   "Check if el-get is installed, and, if not, install it."
   (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
-  
+
   (unless (require 'el-get nil t)
     (unless (capabilityp "internet")
       (error "No internet connection available, cannot install el-get"))
@@ -485,7 +485,7 @@ If DISABLED is true, do nothing."
   ;; Set fill-column to 80 by default
   (when (optionp "fill-column-80")
     (setq-default fill-column 80))
-  
+
   ;; Disable horizontal autoscroll in sr-speedbar
   (when (optionp "sr-speedbar")
     (defvar disable-auto-hscroll (lambda () (setq auto-hscroll-mode nil)))
@@ -570,7 +570,7 @@ If DISABLED is true, do nothing."
       (add-to-list 'geiser-active-implementations 'guile))
     (when (capabilityp "lang-chicken")
       (add-to-list 'geiser-active-implementations 'chicken)))
-  
+
   ;; Allow X11 copy-and-paste into buffers
   (when (capabilityp "graphics-x11")
     (setq x-select-enable-clipboard t))
@@ -605,10 +605,10 @@ If DISABLED is true, do nothing."
   (when (optionp "fix-emacs-cruft")
     ;; What is this, vim? We don't use <insert> here.
     (global-unset-key (kbd "<insert>"))
-    
+
     ;; Fix C-z weirdness
     (global-unset-key (kbd "C-z"))
-    
+
     ;; Make C-x C-b a synonym for C-x b
     (global-set-key (kbd "C-x C-b") 'switch-to-buffer)
 
@@ -616,16 +616,16 @@ If DISABLED is true, do nothing."
     (global-set-key (kbd "C-|") (lambda ()
                                   (interactive)
                                   (insert-char ?λ)))
-    
+
     ;; Fix Ctrl-PgUp and Ctrl-PgDown weirdness
     (global-unset-key (kbd "C-<next>"))
     (global-set-key (kbd "C-<next>") 'scroll-down-command)
     (global-set-key (kbd "C-<prior>") 'scroll-up-command)
-    
+
     ;; Fix C-x C-k and C-x f not being the same as C-x k and C-x C-f respectively
     (global-set-key (kbd "C-x C-k") 'kill-buffer)
     (global-set-key (kbd "C-x f") 'find-file)
-    
+
     ;; Useful shortcuts for compile
     (global-set-key [f5] 'compile)
     (global-set-key [f6] 'recompile)
@@ -669,12 +669,12 @@ If DISABLED is true, do nothing."
           (delete-backward-char 1)
           (goto-char (point-max))
           (insert-char c))))
-    
+
     (defun enable-comint-keyboard-fixes ()
       "Enable fixes for `comint'-derived mode key maps."
       (interactive)
       (add-hook 'post-self-insert-hook 'comint-after-character-insert-fix))
-    
+
     (defun disable-comint-keyboard-fixes ()
       "Disable fixes for `comint'-derived mode key maps."
       (interactive)
@@ -699,11 +699,11 @@ If DISABLED is true, do nothing."
       (interactive)
       (goto-char (point-max))
       (if x (x) (comint-send-input)))
-    
+
     (define-key comint-mode-map     (kbd "<up>") 'comint-jump-to-end-and-up)
     (define-key comint-mode-map   (kbd "<down>") 'comint-jump-to-end-and-down)
     (define-key comint-mode-map      (kbd "RET") 'comint-jump-to-end-and-send))
-  
+
   ;; GNU screen-style keybindings for perspective
   (when (optionp "perspective")
     (global-set-key (kbd "C-a s") 'persp-switch)
@@ -827,7 +827,7 @@ with the buffer in which this was run."
   (add-to-list 'erc-modules 'notifications))
 
 (defun init-fix-miscellany ()
-  "Fix miscellaneous problems in Emacs."  
+  "Fix miscellaneous problems in Emacs."
   (when (optionp "fix-emacs-cruft")
     ;; Autosave into ~/.emacs.d/backups
     (setq backup-directory-alist
@@ -840,7 +840,7 @@ with the buffer in which this was run."
                                     (user-uid)))
     (setq auto-save-file-name-transforms `((".*" ,emacs-tmp-dir t)))
     (setq auto-save-list-file-prefix emacs-tmp-dir)
-    
+
     ;; Enable the upcase-region command
     (put 'upcase-region 'disabled nil)))
 #+END_SRC
@@ -878,76 +878,76 @@ with the buffer in which this was run."
 ;; (defgroup erc-away nil
 ;;   "Automatically set yourself as away through various means."
 ;;   :group 'erc)
-;;  
+;;
 ;; (defcustom erc-away-check-idle-time-command t
 ;;   "The shell command to run to determine the current idle time."
 ;;   "xprintidle-ng"
 ;;   :type 'string
 ;;   :group 'erc-away)
-;;  
+;;
 ;; (defcustom erc-away-idle-timeout t
 ;;   "The amount of time in seconds a user must be idle to trigger an away status."
 ;;   240
 ;;   :type 'number
 ;;   :group 'erc-away)
-;;  
+;;
 ;; (defcustom erc-away-check-delay t
 ;;   "The amount of time in seconds between idle time checks."
 ;;   60
 ;;   :type 'number
 ;;   :group 'erc-away)
-;;  
+;;
 ;; (defcustom erc-away-message t
 ;;   "The away message to set automatically with `erc-away'."
 ;;   "Currently AFK."
 ;;   :type 'string
 ;;   :group 'erc-away)
-;;  
+;;
 ;; (defvar erc-away-initialize-hook nil
 ;;   "This hook is run when `erc-away' is initialized.")
-;;  
+;;
 ;; (defvar erc-away-pre-leave-hook nil
 ;;   "This hook is run before `erc-away' sets you as having left.")
-;;  
+;;
 ;; (defvar erc-away-pre-return-hook nil
 ;;   "This hook is run before `erc-away' sets you as having returned.")
-;;  
+;;
 ;; (defvar erc-away-post-leave-hook nil
 ;;   "This hook is run after `erc-away' sets you as having left.")
-;;  
+;;
 ;; (defvar erc-away-post-return-hook nil
 ;;   "This hook is run after `erc-away' sets you as having returned.")
-;;  
+;;
 ;; (defun erc-away/check-idle-time-command ()
 ;;   "Return the output of running `erc-away-check-idle-time-command' in a shell."
 ;;   (shell-command-to-string erc-away-check-idle-time-command))
-;;  
+;;
 ;; (defun erc-away/get-idle-time ()
-;;   "Get the current idle time in seconds by parsing the output of 
+;;   "Get the current idle time in seconds by parsing the output of
 ;; `erc-away/check-idle-time-command'."
 ;;   (/ (string-to-number (erc-away/check-idle-time-command))
 ;;      1000.0))
-;;  
+;;
 ;; (defun erc-away/idlep ()
 ;;   "Is the user currently away according to `erc-away'?"
 ;;   (> (erc-away/get-idle-time) erc-away-idle-timeout))
-;;  
+;;
 ;; (defun erc-away/awayp ()
 ;;   "Is the user currently away on IRC?"
 ;;   (if (erc-away-time) t nil))
-;;  
+;;
 ;; (defun erc-away/leave ()
 ;;   "Set yourself as away."
 ;;   (run-hooks 'erc-away-pre-leave-hook)
 ;;   (erc-cmd-AWAY erc-away-message)
 ;;   (run-hooks 'erc-away-post-leave-hook))
-;;  
+;;
 ;; (defun erc-away/return ()
 ;;   "Unset yourself as away."
 ;;   (run-hooks 'erc-away-pre-return-hook)
 ;;   (erc-cmd-AWAY "")
 ;;   (run-hooks 'erc-away-post-return-hook))
-;;  
+;;
 ;; (defun erc-away/sync-away ()
 ;;   "If we are currently idle, and we are not away on IRC, run `erc-away/leave'.
 ;; If we are not currently idle, and we are away on IRC, run `erc-away/return'."
@@ -955,62 +955,62 @@ with the buffer in which this was run."
 ;;     (if (erc-away/idlep)
 ;;         (when erc-is-away (erc-away/leave))
 ;;       (unless erc-is-away (erc-away/return))))
-;;  
+;;
 ;; (defun erc-away/initialize ()
 ;;   (run-hooks 'erc-away-initialize-hook)
 ;;   (run-at-time t erc-away-check-delay 'erc-away/sync-away))
-;; 
+;;
 ;; (quail-define-rules
-;;  ("\\fraka" #X1D586) 
-;;  ("\\frakb" #X1D587) 
-;;  ("\\frakc" #X1D588) 
-;;  ("\\frakd" #X1D589) 
-;;  ("\\frake" #X1D58A) 
-;;  ("\\frakf" #X1D58B) 
-;;  ("\\frakg" #X1D58C) 
-;;  ("\\frakh" #X1D58D) 
-;;  ("\\fraki" #X1D58E) 
-;;  ("\\frakj" #X1D58F) 
-;;  ("\\frakk" #X1D590) 
-;;  ("\\frakl" #X1D591) 
-;;  ("\\frakm" #X1D592) 
-;;  ("\\frakn" #X1D593) 
-;;  ("\\frako" #X1D594) 
-;;  ("\\frakp" #X1D595) 
-;;  ("\\frakq" #X1D596) 
-;;  ("\\frakr" #X1D597) 
-;;  ("\\fraks" #X1D598) 
-;;  ("\\frakt" #X1D599) 
-;;  ("\\fraku" #X1D59A) 
-;;  ("\\frakv" #X1D59B) 
-;;  ("\\frakw" #X1D59C) 
-;;  ("\\frakx" #X1D59D) 
-;;  ("\\fraky" #X1D59E) 
-;;  ("\\frakz" #X1D59F) 
-;;  ("\\frakA" #X1D56C) 
-;;  ("\\frakB" #X1D56D) 
-;;  ("\\frakC" #X1D56E) 
-;;  ("\\frakD" #X1D56F) 
-;;  ("\\frakE" #X1D570) 
-;;  ("\\frakF" #X1D571) 
-;;  ("\\frakG" #X1D572) 
-;;  ("\\frakH" #X1D573) 
-;;  ("\\frakI" #X1D574) 
-;;  ("\\frakJ" #X1D575) 
-;;  ("\\frakK" #X1D576) 
-;;  ("\\frakL" #X1D577) 
-;;  ("\\frakM" #X1D578) 
-;;  ("\\frakN" #X1D579) 
-;;  ("\\frakO" #X1D57A) 
-;;  ("\\frakP" #X1D57B) 
-;;  ("\\frakQ" #X1D57C) 
-;;  ("\\frakR" #X1D57D) 
-;;  ("\\frakS" #X1D57E) 
-;;  ("\\frakT" #X1D57F) 
-;;  ("\\frakU" #X1D580) 
-;;  ("\\frakV" #X1D581) 
-;;  ("\\frakW" #X1D582) 
-;;  ("\\frakX" #X1D583) 
-;;  ("\\frakY" #X1D584) 
+;;  ("\\fraka" #X1D586)
+;;  ("\\frakb" #X1D587)
+;;  ("\\frakc" #X1D588)
+;;  ("\\frakd" #X1D589)
+;;  ("\\frake" #X1D58A)
+;;  ("\\frakf" #X1D58B)
+;;  ("\\frakg" #X1D58C)
+;;  ("\\frakh" #X1D58D)
+;;  ("\\fraki" #X1D58E)
+;;  ("\\frakj" #X1D58F)
+;;  ("\\frakk" #X1D590)
+;;  ("\\frakl" #X1D591)
+;;  ("\\frakm" #X1D592)
+;;  ("\\frakn" #X1D593)
+;;  ("\\frako" #X1D594)
+;;  ("\\frakp" #X1D595)
+;;  ("\\frakq" #X1D596)
+;;  ("\\frakr" #X1D597)
+;;  ("\\fraks" #X1D598)
+;;  ("\\frakt" #X1D599)
+;;  ("\\fraku" #X1D59A)
+;;  ("\\frakv" #X1D59B)
+;;  ("\\frakw" #X1D59C)
+;;  ("\\frakx" #X1D59D)
+;;  ("\\fraky" #X1D59E)
+;;  ("\\frakz" #X1D59F)
+;;  ("\\frakA" #X1D56C)
+;;  ("\\frakB" #X1D56D)
+;;  ("\\frakC" #X1D56E)
+;;  ("\\frakD" #X1D56F)
+;;  ("\\frakE" #X1D570)
+;;  ("\\frakF" #X1D571)
+;;  ("\\frakG" #X1D572)
+;;  ("\\frakH" #X1D573)
+;;  ("\\frakI" #X1D574)
+;;  ("\\frakJ" #X1D575)
+;;  ("\\frakK" #X1D576)
+;;  ("\\frakL" #X1D577)
+;;  ("\\frakM" #X1D578)
+;;  ("\\frakN" #X1D579)
+;;  ("\\frakO" #X1D57A)
+;;  ("\\frakP" #X1D57B)
+;;  ("\\frakQ" #X1D57C)
+;;  ("\\frakR" #X1D57D)
+;;  ("\\frakS" #X1D57E)
+;;  ("\\frakT" #X1D57F)
+;;  ("\\frakU" #X1D580)
+;;  ("\\frakV" #X1D581)
+;;  ("\\frakW" #X1D582)
+;;  ("\\frakX" #X1D583)
+;;  ("\\frakY" #X1D584)
 ;;  ("\\frakZ" #X1D585))
 #+END_SRC
