@@ -193,6 +193,7 @@ If DISABLED is true, do nothing."
   (add-opt 'yaml                  nil)
   (add-opt 'polymode              nil)
 
+  (add-opt 'god-mode              nil)
   (add-opt 'subword               nil)
   (add-opt 'iedit                 nil)
   (add-opt 'fill-column-indicator nil)
@@ -236,6 +237,8 @@ If DISABLED is true, do nothing."
   (add-opt 'comint-arrow-history  nil)
   (add-opt 'nano-yank-kill        nil)
   (add-opt 'cua-mode              nil)
+  (add-opt 'fix-markdown          nil)
+  (add-opt 'fix-org               nil)
 
   ;; Indentation
   (add-opt 'indent-spaces         nil)
@@ -296,11 +299,12 @@ If DISABLED is true, do nothing."
   (when (optionp 'powerline)              (add-package 'powerline))
   (when (optionp 'smart-mode-line)        (add-package 'smart-mode-line))
 
+  (when (optionp 'flx)                    (add-to-packages '(flx flx-ido)))
+  (when (optionp 'helm)                   (add-package 'helm))
   (when (optionp 'smex)                   (add-package 'smex))
   (when (optionp 'company)                (add-package 'company-mode))
+  (when (optionp 'god-mode)               (add-package 'god-mode))
   (when (optionp 'yasnippet)              (add-package 'yasnippet))
-  (when (optionp 'helm)                   (add-package 'helm))
-  (when (optionp 'flx)                    (add-to-packages '(flx flx-ido)))
 
   (when (capabilityp "lang-haskell")      (add-to-packages '(haskell-mode
                                                              flycheck-haskell
@@ -372,6 +376,8 @@ If DISABLED is true, do nothing."
 (defun init-require-modules ()
   "Require necessary modules for init.el."
   (require 'term)
+  (when (optionp 'helm)
+    (require 'helm-config))
   (when (optionp 'erc)
     (require 'erc))
   (when (optionp 'extras)
@@ -379,6 +385,12 @@ If DISABLED is true, do nothing."
   (when (optionp 'polymode)
     (require 'poly-R)
     (require 'poly-markdown))
+  (when (optionp 'fix-markdown)
+    (require 'markdown-mode))
+  (when (optionp 'fix-org)
+    (require 'org))
+  (when (optionp 'god-mode)
+    (require 'god-mode))
   (when (optionp 'flycheck)
     (require 'flycheck))
   (when (optionp 'rainbow-delimiters)
@@ -433,19 +445,24 @@ If DISABLED is true, do nothing."
   ;; Set default frame font
   (when (and (capabilityp "graphics") (optionp 'custom-fonts))
     (defvar init-default-font
-      (cond ((capabilityp "font-inconsolata")   "Inconsolata")
+      (cond ((capabilityp "font-dejavu")        "DejaVu Sans Mono")
+            ((capabilityp "font-pragmata")      "PragmataPro")
+            ((capabilityp "font-inconsolata")   "Inconsolata")
             ((capabilityp "font-menlo")         "Menlo")
             ((capabilityp "font-meslo")         "Meslo")
-            ((capabilityp "font-dejavu")        "DejaVu Sans Mono")
             ((capabilityp "font-freefont")      "FreeMono")
             ((capabilityp "font-liberation")    "Liberation Mono")
             ((capabilityp "font-sourcecodepro") "Source Code Pro")
             ((capabilityp "font-luxi")          "Luxi Mono")
             ((capabilityp "font-consolas")      "Consolas")))
-    (setq default-frame-alist
-          (list (cons 'font (format "%s-%d"
-                                    init-default-font
-                                    init-default-font-size)))))
+    (let ((my-font (format "%s-%d"
+                           init-default-font
+                           init-default-font-size)))
+      (set-frame-font my-font nil t)
+      (setq default-frame-alist
+            (list (cons 'font my-font)))))
+
+;; "-unknown-DejaVu Sans Mono for Powerline-normal-normal-normal-*-*-*-*-*-m-0-iso10646-1"
 
   ;; Line numbers
   (when (and (capabilityp "graphics") (optionp 'line-numbers))
@@ -598,6 +615,22 @@ If DISABLED is true, do nothing."
 #+END_SRC
 ** Keybindings
 #+BEGIN_SRC emacs-lisp +n
+(defun get-key-combo (key)
+  "Just return the key combo entered by the user"
+  (interactive "kKey combo: ")
+  key)
+
+(defun keymap-unset-key (key keymap)
+    "Remove binding of KEY in a keymap
+    KEY is a string or vector representing a sequence of keystrokes."
+    (interactive
+     (list (call-interactively #'get-key-combo)
+           (completing-read "Which map: " minor-mode-map-alist nil t)))
+    (let ((map (rest (assoc (intern keymap) minor-mode-map-alist))))
+      (when map
+        (define-key map key nil)
+        (message  "%s unbound for %s" key keymap))))
+
 (defun init-keyboard-options ()
   "Initialize keyboard options."
 
@@ -626,8 +659,8 @@ If DISABLED is true, do nothing."
     (global-set-key (kbd "C-x f") 'find-file)
 
     ;; Useful shortcuts for compile
-    (global-set-key [f5] 'compile)
-    (global-set-key [f6] 'recompile)
+    (global-set-key (kbd "<f5>") 'compile)
+    (global-set-key (kbd "<f6>") 'recompile)
 
     ;; Shortcut for goto-line
     (global-set-key (kbd "M-g") 'goto-line)
@@ -635,6 +668,49 @@ If DISABLED is true, do nothing."
     ;; Shortcuts for replace-regexp and align-regexp
     (global-set-key (kbd "M-[") 'replace-regexp)
     (global-set-key (kbd "M-]") 'align-regexp))
+
+  ;; Enable helm
+  (when (optionp 'helm)
+    (global-set-key (kbd "M-x") 'helm-M-x))
+
+  ;; Enable god-mode
+  (when (optionp 'god-mode)
+    (defun god-update-cursor ()
+      (setq cursor-type (if god-local-mode 'box 'bar)))
+    (add-hook 'god-mode-enabled-hook  'god-update-cursor)
+    (add-hook 'god-mode-disabled-hook 'god-update-cursor)
+    (global-set-key                (kbd "C-x C-1")  'delete-other-windows)
+    (global-set-key                (kbd "C-x C-2")  'split-window-below)
+    (global-set-key                (kbd "C-x C-3")  'split-window-right)
+    (global-set-key                (kbd "C-x C-0")  'delete-window)
+    (global-set-key                (kbd "<escape>") 'god-local-mode)
+    (define-key god-local-mode-map (kbd "i")        'god-local-mode)
+    (define-key god-local-mode-map (kbd "C-g")      'god-local-mode)
+    (define-key god-local-mode-map (kbd "S-h")      'left-char)
+    (define-key god-local-mode-map (kbd "S-j")      'next-line)
+    (define-key god-local-mode-map (kbd "S-k")      'previous-line)
+    (define-key god-local-mode-map (kbd "S-l")      'right-char)
+    (define-key god-local-mode-map (kbd "M-h")      'backward-sexp)
+    (define-key god-local-mode-map (kbd "M-j")      'down-list)
+    (define-key god-local-mode-map (kbd "M-k")      'backward-up-list)
+    (define-key god-local-mode-map (kbd "M-l")      'forward-sexp)
+    (define-key god-local-mode-map (kbd "M-S-h")    'backward-sexp)
+    (define-key god-local-mode-map (kbd "M-S-j")    'forward-paragraph)
+    (define-key god-local-mode-map (kbd "M-S-k")    'backward-paragraph)
+    (define-key god-local-mode-map (kbd "M-S-l")    'forward-sexp)
+    (define-key god-local-mode-map (kbd "C-M-h")    'backward-sexp)
+    (define-key god-local-mode-map (kbd "C-M-j")    'forward-paragraph)
+    (define-key god-local-mode-map (kbd "C-M-k")    'backward-paragraph)
+    (define-key god-local-mode-map (kbd "C-M-l")    'forward-sexp)
+    (define-key god-local-mode-map (kbd "C-S-h")    'backward-sexp)
+    (define-key god-local-mode-map (kbd "C-S-j")    'forward-paragraph)
+    (define-key god-local-mode-map (kbd "C-S-k")    'backward-paragraph)
+    (define-key god-local-mode-map (kbd "C-S-l")    'forward-sexp)
+    (define-key god-local-mode-map (kbd "C-M-S-h")  'backward-sexp)
+    (define-key god-local-mode-map (kbd "C-M-S-j")  'forward-paragraph)
+    (define-key god-local-mode-map (kbd "C-M-S-k")  'backward-paragraph)
+    (define-key god-local-mode-map (kbd "C-M-S-l")  'forward-sexp)
+    (define-key god-local-mode-map (kbd ".")        'repeat))
 
   ;; Nano-style line killing/yanking
   (when (optionp 'nano-yank-kill)
@@ -652,6 +728,39 @@ If DISABLED is true, do nothing."
   (when (optionp 'meta-switch-windows)
     (windmove-default-keybindings 'meta)
     (defvar windmove-wrap-around t))
+
+  ;; Fix markdown-mode
+  (when (optionp 'fix-markdown)
+    (define-key markdown-mode-map (kbd "C-k") nil)
+    (define-key markdown-mode-map (kbd "<M-up>") nil)
+    (define-key markdown-mode-map (kbd "<M-down>") nil)
+    (define-key markdown-mode-map (kbd "<M-left>") nil)
+    (define-key markdown-mode-map (kbd "<M-right>") nil))
+
+  ;; Fix org-mode
+  (when (optionp 'fix-org)
+    (setq org-planning-line-re "")
+    (setq org-clock-line-re    "")
+
+    (define-key org-mode-map (kbd "C-k")         nil)
+    (define-key org-mode-map (kbd "<C-S-up>")    nil)
+    (define-key org-mode-map (kbd "<C-S-down>")  nil)
+    (define-key org-mode-map (kbd "<C-S-left>")  nil)
+    (define-key org-mode-map (kbd "<C-S-right>") nil)
+    (define-key org-mode-map (kbd "<M-S-up>")    nil)
+    (define-key org-mode-map (kbd "<M-S-down>")  nil)
+    (define-key org-mode-map (kbd "<M-S-left>")  nil)
+    (define-key org-mode-map (kbd "<M-S-right>") nil)
+    (define-key org-mode-map (kbd "<M-up>")      nil)
+    (define-key org-mode-map (kbd "<M-down>")    nil)
+    (define-key org-mode-map (kbd "<M-left>")    nil)
+    (define-key org-mode-map (kbd "<M-right>")   nil)
+    (define-key org-mode-map (kbd "<S-up>")      nil)
+    (define-key org-mode-map (kbd "<S-down>")    nil)
+    (define-key org-mode-map (kbd "<S-left>")    nil)
+    (define-key org-mode-map (kbd "<S-right>")   nil)
+
+    (define-key org-mode-map (kbd "C-c C-c")     'org-toggle-checkbox))
 
   ;; Free up some keys for keybindings
   (when (optionp 'free-up-keys)

@@ -15,47 +15,21 @@
  '(create-lockfiles nil)
  '(custom-safe-themes
    (quote
-    ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e"
-     "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa"
-     "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4"
-     default)))
+    ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(elmo-localdir-folder-path "~/.emacs.d/mail")
  '(elmo-msgdb-directory "~/.emacs.d/elmo")
  '(epa-file-cache-passphrase-for-symmetric-encryption t)
  '(flycheck-pmd-rulesets
    (quote
-    ("java-basic"
-     "java-design"
-     "java-imports"
-     "java-braces"
-     "java-unusedcode"
-     "java-naming"
-     "java-optimizations"
-     "java-unnecessary"
-     "java-sunsecure"
-     "java-clone"
-     "java-codesize"
-     "java-comments"
-     "java-coupling"
-     "java-typeresolution"
-     "java-strictexception"
-     "java-strings"
-     "java-empty"
-     "java-junit")))
+    ("java-basic" "java-design" "java-imports" "java-braces" "java-unusedcode" "java-naming" "java-optimizations" "java-unnecessary" "java-sunsecure" "java-clone" "java-codesize" "java-comments" "java-coupling" "java-typeresolution" "java-strictexception" "java-strings" "java-empty" "java-junit")))
+ '(font-latex-fontify-script nil)
  '(gac-automatically-push-p t)
- '(geiser-guile-extra-keywords (quote ("lambda\\*")))
+ '(geiser-guile-extra-keywords (quote ("lambda\\*" "λ*" "case-lambda" "define~")))
  '(geiser-guile-load-init-file-p t)
+ '(geiser-mode-smart-tab-p t)
  '(haskell-complete-module-preferred
    (quote
-    ("Data.ByteString"
-     "Data.ByteString.Lazy"
-     "Data.Conduit"
-     "Data.Function"
-     "Data.List"
-     "Data.Map"
-     "Data.Maybe"
-     "Data.Monoid"
-     "Data.Ord")))
+    ("Data.ByteString" "Data.ByteString.Lazy" "Data.Conduit" "Data.Function" "Data.List" "Data.Map" "Data.Maybe" "Data.Monoid" "Data.Ord")))
  '(haskell-interactive-mode-eval-mode (quote ignore))
  '(haskell-interactive-mode-eval-pretty nil)
  '(haskell-interactive-mode-include-file-name nil)
@@ -80,8 +54,13 @@
  '(lisp-lambda-list-keyword-alignment t)
  '(lisp-lambda-list-keyword-parameter-alignment t)
  '(lisp-lambda-list-keyword-parameter-indentation 0)
+ '(markdown-enable-math t)
+ '(markdown-indent-on-enter nil)
  '(offlineimap-mode-line-text "imap: ")
+ '(org-src-fontify-natively t)
  '(org-support-shift-select (quote always))
+ '(python-shell-interpreter "python3")
+ '(safe-local-variable-values (quote ((eval delete-trailing-whitespace))))
  '(sh-alias-alist
    (quote
     ((csh . tcsh)
@@ -91,6 +70,7 @@
      (sh5 . sh)
      (nix-shell . zsh))))
  '(tags-revert-without-query t)
+ '(tex-fontify-script nil)
  '(warning-suppress-types (quote ((\(undo\ discard-info\)))))
  '(wl-address-file "~/.emacs.d/wl/addresses")
  '(wl-alias-file "~/.emacs.d/wl/aliases")
