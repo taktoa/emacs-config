@@ -67,10 +67,12 @@ If DISABLED is true, do nothing."
   "Is the given PACKAGE installed?"
   (member package my-packages))
 
-(defun add-package (package)
-  "Add the given PACKAGE to `my-packages'."
-  (unless (packagep package)
-    (setq my-packages (append my-packages (list package)))))
+(require 'cl)
+
+(defun add-package (&rest packages)
+  "Add the given PACKAGES to `my-packages'."
+  (unless (cl-every #'packagep packages)
+    (setq my-packages (append my-packages packages))))
 
 (defun add-to-packages (packages)
   "Add the given PACKAGES to `my-packages'."
@@ -176,7 +178,7 @@ If DISABLED is true, do nothing."
 
   (add-opt 'extras                nil) ;; typically very unobjectionable stuff
 
-  (add-opt 'ace-jump-mode         nil)
+  (add-opt 'ace-isearch           nil)
   (add-opt 'speedbar              nil)
   (add-opt 'sr-speedbar           t)
   (add-opt 'projectile            nil)
@@ -184,7 +186,7 @@ If DISABLED is true, do nothing."
   (add-opt 'autorevert            nil)
   (add-opt 'company               nil)
   (add-opt 'flycheck              nil)
-  (add-opt 'smex                  nil)
+  (add-opt 'smex                  t)
   (add-opt 'helm                  nil)
   (add-opt 'rudel                 t)
 
@@ -265,6 +267,7 @@ If DISABLED is true, do nothing."
 (defun init-generate-packages ()
   "Generate the list of packages to install."
   (add-to-packages '(cedet-devel el-get let-alist tramp diminish delight))
+  (add-to-packages '(session))
 
   (when (optionp 'extras)                 (add-package 'help-fns+)
                                           (add-package 'git-auto-commit-mode))
@@ -277,7 +280,10 @@ If DISABLED is true, do nothing."
   (when (optionp 'multi-term)             (add-package 'multi-term))
   (when (optionp 'rainbow-delimiters)     (add-package 'rainbow-delimiters))
   (when (optionp 'sr-speedbar)            (add-package 'sr-speedbar))
-  (when (optionp 'ace-jump-mode)          (add-package 'ace-jump-mode))
+  (when (optionp 'ace-isearch)            (add-package 'avy
+                                                       'ace-jump-mode
+                                                       'helm-swoop
+                                                       'ace-isearch))
 
   (when (optionp 'wanderlust-email)       (add-package 'wanderlust))
   (when (optionp 'offlineimap)            (add-package 'offlineimap))
@@ -360,12 +366,7 @@ If DISABLED is true, do nothing."
 (defun init-sync-packages ()
   "Make the installed packages consistent with the contents of `my-packages'."
   (el-get 'sync my-packages)
-  (el-get-cleanup my-packages)
-  (el-get-bundle flycheck-maven
-    :description "Flycheck support for Maven"
-    :type git
-    :url "file:///home/remy/Documents/NotWork/Projects/EmacsLisp/flycheck-maven"
-    :features flycheck-maven))
+  (el-get-cleanup my-packages))
 
 (defun init-update-packages ()
   "Update all packages."
@@ -377,6 +378,7 @@ If DISABLED is true, do nothing."
   "Require necessary modules for init.el."
   (require 'term)
   (when (optionp 'helm)
+    (require 'helm)
     (require 'helm-config))
   (when (optionp 'erc)
     (require 'erc))
@@ -405,10 +407,8 @@ If DISABLED is true, do nothing."
     (require 'smex))
   (when (optionp 'company)
     (require 'company))
-  (when (optionp 'ace-jump-mode)
-    (require 'ace-jump-mode))
-  (when (optionp 'helm)
-    (require 'helm))
+  (when (optionp 'ace-isearch)
+    (require 'ace-isearch))
   (when (optionp 'sr-speedbar)
     (require 'sr-speedbar))
   (when (optionp 'perspective)
@@ -467,7 +467,7 @@ If DISABLED is true, do nothing."
   ;; Line numbers
   (when (and (capabilityp "graphics") (optionp 'line-numbers))
     (line-number-mode 1)
-    (global-hl-line-mode)
+    ;; (global-hl-line-mode)
     (global-linum-mode 1)
     (setq-default linum-format "%4d \u2502"))
 
@@ -679,38 +679,36 @@ If DISABLED is true, do nothing."
       (setq cursor-type (if god-local-mode 'box 'bar)))
     (add-hook 'god-mode-enabled-hook  'god-update-cursor)
     (add-hook 'god-mode-disabled-hook 'god-update-cursor)
-    (global-set-key                (kbd "C-x C-1")  'delete-other-windows)
-    (global-set-key                (kbd "C-x C-2")  'split-window-below)
-    (global-set-key                (kbd "C-x C-3")  'split-window-right)
-    (global-set-key                (kbd "C-x C-0")  'delete-window)
-    (global-set-key                (kbd "<escape>") 'god-local-mode)
-    (define-key god-local-mode-map (kbd "i")        'god-local-mode)
-    (define-key god-local-mode-map (kbd "C-g")      'god-local-mode)
-    (define-key god-local-mode-map (kbd "S-h")      'left-char)
-    (define-key god-local-mode-map (kbd "S-j")      'next-line)
-    (define-key god-local-mode-map (kbd "S-k")      'previous-line)
-    (define-key god-local-mode-map (kbd "S-l")      'right-char)
-    (define-key god-local-mode-map (kbd "M-h")      'backward-sexp)
-    (define-key god-local-mode-map (kbd "M-j")      'down-list)
-    (define-key god-local-mode-map (kbd "M-k")      'backward-up-list)
-    (define-key god-local-mode-map (kbd "M-l")      'forward-sexp)
-    (define-key god-local-mode-map (kbd "M-S-h")    'backward-sexp)
-    (define-key god-local-mode-map (kbd "M-S-j")    'forward-paragraph)
-    (define-key god-local-mode-map (kbd "M-S-k")    'backward-paragraph)
-    (define-key god-local-mode-map (kbd "M-S-l")    'forward-sexp)
-    (define-key god-local-mode-map (kbd "C-M-h")    'backward-sexp)
-    (define-key god-local-mode-map (kbd "C-M-j")    'forward-paragraph)
-    (define-key god-local-mode-map (kbd "C-M-k")    'backward-paragraph)
-    (define-key god-local-mode-map (kbd "C-M-l")    'forward-sexp)
-    (define-key god-local-mode-map (kbd "C-S-h")    'backward-sexp)
-    (define-key god-local-mode-map (kbd "C-S-j")    'forward-paragraph)
-    (define-key god-local-mode-map (kbd "C-S-k")    'backward-paragraph)
-    (define-key god-local-mode-map (kbd "C-S-l")    'forward-sexp)
-    (define-key god-local-mode-map (kbd "C-M-S-h")  'backward-sexp)
-    (define-key god-local-mode-map (kbd "C-M-S-j")  'forward-paragraph)
-    (define-key god-local-mode-map (kbd "C-M-S-k")  'backward-paragraph)
-    (define-key god-local-mode-map (kbd "C-M-S-l")  'forward-sexp)
-    (define-key god-local-mode-map (kbd ".")        'repeat))
+    (when (optionp 'ace-isearch)
+      (defun god-ace-isearch ()
+        "Pause god-local-mode, start ace-isearch, and resume god-local mode 
+when ace-isearch finishes."
+        (interactive)
+        (god-local-mode-pause)
+        (ace-isearch-mode +1)
+        (god-local-mode-resume)))
+    (global-set-key                (kbd "C-x C-1")    'delete-other-windows)
+    (global-set-key                (kbd "C-x C-2")    'split-window-below)
+    (global-set-key                (kbd "C-x C-3")    'split-window-right)
+    (global-set-key                (kbd "C-x C-0")    'delete-window)
+    (global-set-key                (kbd "<escape>")   'god-local-mode)
+    (global-set-key                (kbd "<S-escape>") 'cua-rectangle-mark-mode)
+    (define-key god-local-mode-map (kbd "i")          'god-local-mode)
+    (define-key god-local-mode-map (kbd "C-g")        'god-local-mode)
+    (define-key god-local-mode-map (kbd "f")          'god-ace-isearch)
+    (define-key god-local-mode-map (kbd "h")          'left-char)
+    (define-key god-local-mode-map (kbd "j")          'next-line)
+    (define-key god-local-mode-map (kbd "k")          'previous-line)
+    (define-key god-local-mode-map (kbd "l")          'right-char)
+    (define-key god-local-mode-map (kbd "M-h")        'backward-sexp)
+    (define-key god-local-mode-map (kbd "M-j")        'forward-paragraph)
+    (define-key god-local-mode-map (kbd "M-k")        'backward-paragraph)
+    (define-key god-local-mode-map (kbd "M-l")        'forward-sexp)
+    (define-key god-local-mode-map (kbd "C-M-h")      'backward-sexp)
+    (define-key god-local-mode-map (kbd "C-M-j")      'forward-paragraph)
+    (define-key god-local-mode-map (kbd "C-M-k")      'backward-paragraph)
+    (define-key god-local-mode-map (kbd "C-M-l")      'forward-sexp)
+    (define-key god-local-mode-map (kbd ".")          'repeat))
 
   ;; Nano-style line killing/yanking
   (when (optionp 'nano-yank-kill)
