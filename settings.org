@@ -202,6 +202,7 @@ If DISABLED is true, do nothing."
   (add-opt 'fill-column-80        nil)
   (add-opt 'multi-term            nil)
   (add-opt 'rainbow-delimiters    nil)
+  (add-opt 'prettify-symbols      t)
 
   (add-opt 'smartparens           nil)
 
@@ -267,7 +268,7 @@ If DISABLED is true, do nothing."
 (defun init-generate-packages ()
   "Generate the list of packages to install."
   (add-to-packages '(cedet-devel el-get let-alist tramp diminish delight))
-  (add-to-packages '(session))
+  (add-to-packages '(session pretty-sha-path))
 
   (when (optionp 'extras)                 (add-package 'help-fns+)
                                           (add-package 'git-auto-commit-mode))
@@ -316,7 +317,8 @@ If DISABLED is true, do nothing."
                                                              flycheck-haskell
                                                              company-ghc
                                                              ghc-mod
-                                                             hi2)))
+                                                             hi2
+                                                             liquid-types)))
   (when (capabilityp "vcs-git")           (add-package 'magit))
   (when (capabilityp "lang-ledger")       (add-package 'ledger-mode))
   (when (capabilityp "lang-latex")        (add-package 'auctex))
@@ -349,6 +351,14 @@ If DISABLED is true, do nothing."
   "Check if el-get is installed, and, if not, install it."
   (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
 
+  ;; Add MELPA packages
+  (require 'package)
+  (add-to-list 'package-archives
+    ;; The 't' means to append, so that MELPA comes after the more
+    ;; stable ELPA archive.
+    '("melpa" . "http://melpa.milkbox.net/packages/") t)
+
+  ;; Install el-get if it isn't installed already
   (unless (require 'el-get nil t)
     (unless (capabilityp "internet")
       (error "No internet connection available, cannot install el-get"))
@@ -536,6 +546,13 @@ If DISABLED is true, do nothing."
 #+BEGIN_SRC emacs-lisp +n
 (defun init-editing-options ()
   "Initialize editing options."
+
+  ;; Prettify Nix paths
+  (global-pretty-sha-path-mode)
+
+  ;; Globally prettify symbols
+  (when (optionp 'prettify-symbols)
+    (global-prettify-symbols-mode +1))
 
   ;; Move by subword in CamelCase
   (when (optionp 'subword)
@@ -931,6 +948,15 @@ with the buffer in which this was run."
 
 (when (optionp 'erc-notifications)
   (add-to-list 'erc-modules 'notifications))
+
+(setq erc-server-history-list '("enigmasm.irc.slack.com"
+                                "uiuc-icfp.irc.slack.com"
+                                "uiuc-cs.irc.slack.com"
+                                "fuspr.irc.slack.com"
+                                "fsl-uiuc.irc.slack.com"
+                                "enigmasm.irc.slack.com"
+                                "irc.w3.org"
+                                "irc.freenode.net"))
 
 (defun init-fix-miscellany ()
   "Fix miscellaneous problems in Emacs."
