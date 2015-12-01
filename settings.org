@@ -19,6 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 This code is responsible for initializing all my Emacs configuration settings.
 
 * Code
+** Include Common Lisp
+#+BEGIN_SRC emacs-lisp +n
+(require 'cl)
+#+END_SRC
 ** Constants
 #+BEGIN_SRC emacs-lisp +n
 (load-file "~/.emacs.d/detect.el")
@@ -66,8 +70,6 @@ If DISABLED is true, do nothing."
 (defun packagep (package)
   "Is the given PACKAGE installed?"
   (member package my-packages))
-
-(require 'cl)
 
 (defun add-package (&rest packages)
   "Add the given PACKAGES to `my-packages'."
@@ -192,6 +194,7 @@ If DISABLED is true, do nothing."
 
   (add-opt 'org                   nil)
   (add-opt 'markdown              nil)
+  (add-opt 'textile               nil)
   (add-opt 'yaml                  nil)
   (add-opt 'polymode              nil)
 
@@ -205,6 +208,7 @@ If DISABLED is true, do nothing."
   (add-opt 'prettify-symbols      t)
 
   (add-opt 'smartparens           nil)
+  (add-opt 'adjust-parens         nil)
 
   (add-opt 'fix-emacs-cruft       nil)
 
@@ -223,6 +227,8 @@ If DISABLED is true, do nothing."
   ;; Email
   (add-opt 'wanderlust-email      nil)
   (add-opt 'offlineimap           nil)
+  (add-opt 'elfeed                nil)
+  
 
   ;; Window keybinds
   (add-opt 'meta-switch-windows   nil)
@@ -267,11 +273,11 @@ If DISABLED is true, do nothing."
 #+BEGIN_SRC emacs-lisp +n
 (defun init-generate-packages ()
   "Generate the list of packages to install."
-  (add-to-packages '(cedet-devel el-get let-alist tramp diminish delight))
-  (add-to-packages '(session pretty-sha-path))
 
-  (when (optionp 'extras)                 (add-package 'help-fns+)
-                                          (add-package 'git-auto-commit-mode))
+  (when (optionp 'extras)                 (add-package 'help-fns+ 'git-auto-commit-mode
+                                                       'cedet-devel 'el-get 'let-alist
+                                                       'tramp 'diminish 'delight
+                                                       'session))
 
   (when (optionp 'perspective)            (add-package 'perspective))
   (when (optionp 'projectile)             (add-package 'projectile))
@@ -288,15 +294,18 @@ If DISABLED is true, do nothing."
 
   (when (optionp 'wanderlust-email)       (add-package 'wanderlust))
   (when (optionp 'offlineimap)            (add-package 'offlineimap))
+  (when (optionp 'elfeed)                 (add-package 'elfeed))
 
   (when (optionp 'org)                    (add-package 'org-mode))
   (when (optionp 'org-trello)             (add-package 'org-trello))
   (when (optionp 'yaml)                   (add-package 'yaml-mode))
   (when (optionp 'markdown)               (add-package 'markdown-mode))
+  (when (optionp 'textile)                (add-package 'textile-mode))
   (when (optionp 'polymode)               (add-package 'polymode))
 
   (when (optionp 'rudel)                  (add-package 'rudel))
   (when (optionp 'smartparens)            (add-package 'smartparens))
+  (when (optionp 'adjust-parens)          (add-package 'adjust-parens))
   (when (optionp 'flycheck)               (add-package 'flycheck))
   (when (optionp 'undo-tree)              (add-package 'undo-tree))
 
@@ -306,38 +315,45 @@ If DISABLED is true, do nothing."
   (when (optionp 'powerline)              (add-package 'powerline))
   (when (optionp 'smart-mode-line)        (add-package 'smart-mode-line))
 
-  (when (optionp 'flx)                    (add-to-packages '(flx flx-ido)))
+  (when (optionp 'flx)                    (add-package 'flx 'flx-ido))
   (when (optionp 'helm)                   (add-package 'helm))
   (when (optionp 'smex)                   (add-package 'smex))
   (when (optionp 'company)                (add-package 'company-mode))
   (when (optionp 'god-mode)               (add-package 'god-mode))
   (when (optionp 'yasnippet)              (add-package 'yasnippet))
 
-  (when (capabilityp "lang-haskell")      (add-to-packages '(haskell-mode
-                                                             flycheck-haskell
-                                                             company-ghc
-                                                             ghc-mod
-                                                             hi2
-                                                             liquid-types)))
+  (when (capabilityp "lang-haskell")      (add-package 'haskell-mode
+                                                       'flycheck-haskell
+                                                       'company-ghc
+                                                       'ghc-mod
+                                                       'hi2
+                                                       'liquid-types
+                                                       'haskell-input-method))
   (when (capabilityp "vcs-git")           (add-package 'magit))
   (when (capabilityp "lang-ledger")       (add-package 'ledger-mode))
   (when (capabilityp "lang-latex")        (add-package 'auctex))
-  (when (capabilityp "lang-ocaml")        (add-to-packages '(utop
-                                                             tuareg-mode)))
+  (when (capabilityp "lang-ocaml")        (add-package 'tuareg-mode 'utop))
   (when (capabilityp "lang-nix")          (add-package 'nix-mode))
   (when (capabilityp "lang-purescript")   (add-package 'purescript-mode))
+  (when (capabilityp "lang-rust")         (add-package 'rust-mode
+                                                       'toml-mode
+                                                       'rustfmt))
+  (when (capabilityp "lang-idris")        (add-package 'prop-menu
+                                                       'idris-mode))
 ;;  (when (capabilityp "lang-elm")          (add-package 'elm-mode))
   (when (capabilityp "lang-kframework")   (add-package 'k3-mode))
   (when (capabilityp "lang-chicken")      (add-package 'geiser))
   (when (capabilityp "lang-guile")        (add-package 'geiser))
   (when (capabilityp "lang-racket")       (add-package 'geiser))
   (when (capabilityp "lang-zsh")          (add-package 'zlc))
-  (when (capabilityp "util-pmd")          (add-package 'flycheck-pmd))
-  (when (capabilityp "lang-java")         (add-to-packages '(scala-mode
-                                                             groovy-mode
-                                                             javadoc-help
-                                                             javadoc-lookup
-                                                             javaimp)))
+;;  (when (capabilityp "util-pmd")          (add-package 'flycheck-pmd))
+  (when (capabilityp "lang-java")         (add-package 'scala-mode
+                                                       'ceylon-mode
+                                                       'kotlin-mode
+                                                       'groovy-mode
+                                                       'javadoc-help
+                                                       'javadoc-lookup
+                                                       'javaimp))
   (when (and (capabilitiesp '("lang-java" "lang-groovy" "build-gradle"))
              (optionp 'malabar))          (add-package 'malabar-mode))
 
@@ -353,10 +369,7 @@ If DISABLED is true, do nothing."
 
   ;; Add MELPA packages
   (require 'package)
-  (add-to-list 'package-archives
-    ;; The 't' means to append, so that MELPA comes after the more
-    ;; stable ELPA archive.
-    '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 
   ;; Install el-get if it isn't installed already
   (unless (require 'el-get nil t)
@@ -366,7 +379,9 @@ If DISABLED is true, do nothing."
         (url-retrieve-synchronously
          "https://github.com/dimitri/el-get/raw/master/el-get-install.el")
       (goto-char (point-max))
-      (eval-print-last-sexp)))
+      (eval-print-last-sexp))
+    (el-get-emacswiki-build-local-recipes)
+    (el-get-elpa-build-local-recipes))
 
   (require 'el-get)
 
@@ -396,6 +411,7 @@ If DISABLED is true, do nothing."
     (require 'help-fns+))
   (when (optionp 'polymode)
     (require 'poly-R)
+    (require 'poly-org)
     (require 'poly-markdown))
   (when (optionp 'fix-markdown)
     (require 'markdown-mode))
@@ -443,6 +459,8 @@ If DISABLED is true, do nothing."
 #+BEGIN_SRC emacs-lisp +n
 (defun init-theme-options ()
   "Initialize graphical/theme-related options."
+
+  (xterm-mouse-mode)
 
   ;; Disable various annoyances that come with Emacs
   (when (and (capabilityp "graphics") (optionp 'fix-emacs-cruft))
@@ -547,9 +565,6 @@ If DISABLED is true, do nothing."
 (defun init-editing-options ()
   "Initialize editing options."
 
-  ;; Prettify Nix paths
-  (global-pretty-sha-path-mode)
-
   ;; Globally prettify symbols
   (when (optionp 'prettify-symbols)
     (global-prettify-symbols-mode +1))
@@ -563,6 +578,13 @@ If DISABLED is true, do nothing."
     (global-auto-revert-mode)
     (defvar auto-revert-check-vc-info t))
 
+
+  (when (optionp 'adjust-parens)
+    (require 'adjust-parens)
+    (add-hook 'emacs-lisp-mode-hook #'adjust-parens-mode)
+    (add-hook 'clojure-mode-hook    #'adjust-parens-mode)
+    (add-hook 'scheme-mode-hook     #'adjust-parens-mode))
+
   ;; Smarter editing with matching delimiters
   (when (optionp 'smartparens)
     (smartparens-global-mode)
@@ -574,8 +596,13 @@ If DISABLED is true, do nothing."
 
   ;; Add multiple "perspectives" for buffers (i.e.: workspaces)
   (when (optionp 'perspective)
-    (persp-mode)
-    (persp-turn-on-modestring))
+    (persp-mode 1)
+    (persp-turn-on-modestring)
+    ;; (global-set-key (kbd "C-x b") 
+    ;;                 #'(lambda (arg)
+    ;;                     (interactive "P")
+    ;;                     (with-persp-buffer-list () (ibuffer arg))))
+    )
 
   ;; Indent automagically
   (when (optionp 'electric-indent)
@@ -682,9 +709,13 @@ If DISABLED is true, do nothing."
     ;; Shortcut for goto-line
     (global-set-key (kbd "M-g") 'goto-line)
 
-    ;; Shortcuts for replace-regexp and align-regexp
-    (global-set-key (kbd "M-[") 'replace-regexp)
-    (global-set-key (kbd "M-]") 'align-regexp))
+    ;; Shortcuts for replace-string, replace-regexp, and align-regexp
+    (global-set-key (kbd "M-r") 'replace-string)
+    (global-set-key (kbd "C-S-r") 'replace-regexp)
+    (global-set-key (kbd "C-S-a") 'align-regexp)
+
+    ;; Shortcut for delete-trailing-whitespace
+    (global-set-key (kbd "M-\\") 'delete-trailing-whitespace))
 
   ;; Enable helm
   (when (optionp 'helm)
@@ -710,6 +741,7 @@ when ace-isearch finishes."
     (global-set-key                (kbd "C-x C-0")    'delete-window)
     (global-set-key                (kbd "<escape>")   'god-local-mode)
     (global-set-key                (kbd "<S-escape>") 'cua-rectangle-mark-mode)
+
     (define-key god-local-mode-map (kbd "i")          'god-local-mode)
     (define-key god-local-mode-map (kbd "C-g")        'god-local-mode)
     (define-key god-local-mode-map (kbd "f")          'god-ace-isearch)
@@ -729,8 +761,7 @@ when ace-isearch finishes."
 
   ;; Nano-style line killing/yanking
   (when (optionp 'nano-yank-kill)
-    (global-set-key (kbd "C-k") 'kill-whole-line)
-    (global-set-key (kbd "C-u") 'yank))
+    (global-set-key (kbd "C-k") 'kill-whole-line))
 
   ;; Resize windows with super + arrow keys
   (when (optionp 'super-resize-windows)
@@ -775,6 +806,7 @@ when ace-isearch finishes."
     (define-key org-mode-map (kbd "<S-left>")    nil)
     (define-key org-mode-map (kbd "<S-right>")   nil)
 
+    (define-key org-mode-map (kbd "<S-return>")  'org-table-next-row)
     (define-key org-mode-map (kbd "C-c C-c")     'org-toggle-checkbox))
 
   ;; Free up some keys for keybindings
@@ -860,7 +892,10 @@ when ace-isearch finishes."
     (define-key
       haskell-interactive-mode-map
       (kbd "C-c C-t")
-      'haskell-mode-show-type-at)))
+      'haskell-mode-show-type-at)
+    (require 'haskell-input-method)
+    (add-hook 'haskell-mode-hook 
+      (lambda () (set-input-method "haskell-unicode")))))
 #+END_SRC
 ** Hook utility functions
 #+BEGIN_SRC emacs-lisp +n
@@ -941,6 +976,82 @@ with the buffer in which this was run."
 #+END_SRC
 ** Miscellaneous
 #+BEGIN_SRC emacs-lisp +n
+(defun string-tail (string)
+  "Return the ``tail'' of a STRING: all of the elements except the first."
+  (apply #'string (cdr (string-to-list string))))
+
+;;(require 'elfeed)
+
+(cl-flet* ((kw-to-symbol (kw) (intern (string-tail (symbol-name kw))))
+           (add-feed (url &rest tags)
+                     (add-to-list 'elfeed-feeds
+                                  (cons url (mapcar #'kw-to-symbol tags)))))
+  (setq elfeed-feeds '())
+  (add-feed "http://slatestarcodex.com/feed"
+            :blog :rational)
+  (add-feed "http://www.overcomingbias.com/feed"
+            :blog :rational)
+  (add-feed "https://lobste.rs/rss"
+            :news :software)
+  (add-feed "https://:news.ycombinator.com/rss"
+            :news :software)
+  (add-feed "https://hackaday.com/:blog/feed"
+            :news :hardware)
+  (add-feed "https://pipedot.org/atom"
+            :news :software)
+  (add-feed "https://www.reddit.com/r/haskell/.rss"
+            :news :software)
+  (add-feed "https://groups.google.com/forum/feed/haskell-cafe/msgs/rss.xml"
+            :email :software :haskell)
+  (add-feed "https://planet.haskell.org/rss20.xml"
+            :blog :software :haskell)
+  (add-feed "https://www.xkcd.com/rss.xml"
+            :comic)
+  (add-feed "http://www.smbc-comics.com/rss.php"
+            :comic))
+
+(define-generic-mode 'bnf-mode
+ () ;; comment char: inapplicable because # must be at start of line
+ nil ;; keywords
+ '(
+   ("^#.*" . 'font-lock-comment-face) ;; comments at start of line
+   ("^<[^ \t\n]*?>" . 'font-lock-function-name-face) ;; LHS nonterminals
+   ("<[^ \t\n]*?>" . 'font-lock-builtin-face) ;; other nonterminals
+   ("::=" . 'font-lock-const-face) ;; "goes-to" symbol
+   ("\|" . 'font-lock-warning-face) ;; "OR" symbol
+   )
+ '("\\.bnf\\'") ;; filename suffixes
+ nil ;; extra function hooks
+ "Major mode for BNF highlighting.")
+
+(define-generic-mode 'abnf-mode
+ () ;; comment char: inapplicable because # must be at start of line
+ nil ;; keywords
+ '(
+   ("^#.*" . 'font-lock-comment-face) ;; comments at start of line
+   ("^<[^ \t\n]*?>" . 'font-lock-function-name-face) ;; LHS nonterminals
+   ("<[^ \t\n]*?>" . 'font-lock-builtin-face) ;; other nonterminals
+   ("::=" . 'font-lock-const-face) ;; "goes-to" symbol
+   ("\|" . 'font-lock-warning-face) ;; "OR" symbol
+   )
+ '("\\.bnf\\'") ;; filename suffixes
+ nil ;; extra function hooks
+ "Major mode for BNF highlighting.")
+
+(define-generic-mode 'peg-mode
+ () ;; comment char: inapplicable because # must be at start of line
+ nil ;; keywords
+ '(
+   ("^#.*" . 'font-lock-comment-face) ;; comments at start of line
+   ("^<[^ \t\n]*?>" . 'font-lock-function-name-face) ;; LHS nonterminals
+   ("<[^ \t\n]*?>" . 'font-lock-builtin-face) ;; other nonterminals
+   ("::=" . 'font-lock-const-face) ;; "goes-to" symbol
+   ("\|" . 'font-lock-warning-face) ;; "OR" symbol
+   )
+ '("\\.bnf\\'") ;; filename suffixes
+ nil ;; extra function hooks
+ "Major mode for BNF highlighting.")
+
 (when (optionp 'erc-fix)
   (add-to-list 'erc-modules 'readonly)
   (add-to-list 'erc-modules 'ring)
@@ -961,6 +1072,9 @@ with the buffer in which this was run."
 (defun init-fix-miscellany ()
   "Fix miscellaneous problems in Emacs."
   (when (optionp 'fix-emacs-cruft)
+    ;; Use Kotlin in *.kt files
+    (add-to-list 'auto-mode-alist '("\\.kt\\'" . kotlin-mode))
+
     ;; Autosave into ~/.emacs.d/backups
     (setq backup-directory-alist
           `(("." . ,(expand-file-name "~/.emacs.d/backups"))))

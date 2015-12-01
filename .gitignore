@@ -1,3 +1,6 @@
 *
+!init.el
+!settings.org
 !detect.el
+!detect-lib.el
 !el-get-user/*
