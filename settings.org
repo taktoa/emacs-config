@@ -239,6 +239,7 @@ If DISABLED is true, do nothing."
   (add-opt 'solarized-dark        t)
   (add-opt 'solarized-light       t)
   (add-opt 'zenburn               nil)
+  (add-opt 'material              t)
   (add-opt 'thin-cursor           nil)
 
   ;; Editor keybinds
@@ -252,7 +253,6 @@ If DISABLED is true, do nothing."
   ;; Indentation
   (add-opt 'indent-spaces         nil)
   (add-opt 'electric-indent       nil)
-  (add-opt 'haskell-indent-simple t)
   (add-opt 'sane-c-tab-width      nil)
 
   ;; Misc
@@ -277,7 +277,8 @@ If DISABLED is true, do nothing."
   (when (optionp 'extras)                 (add-package 'help-fns+ 'git-auto-commit-mode
                                                        'cedet-devel 'el-get 'let-alist
                                                        'tramp 'diminish 'delight
-                                                       'session))
+                                                       'session 'protobuf-mode
+                                                       'flycheck-protobuf))
 
   (when (optionp 'perspective)            (add-package 'perspective))
   (when (optionp 'projectile)             (add-package 'projectile))
@@ -312,6 +313,7 @@ If DISABLED is true, do nothing."
   (when (or (optionp 'solarized-dark)
             (optionp 'solarized-light))   (add-package 'color-theme-solarized))
   (when (optionp 'zenburn)                (add-package 'color-theme-zenburn))
+  (when (optionp 'material)               (add-package 'material-theme))
   (when (optionp 'powerline)              (add-package 'powerline))
   (when (optionp 'smart-mode-line)        (add-package 'smart-mode-line))
 
@@ -333,14 +335,17 @@ If DISABLED is true, do nothing."
   (when (capabilityp "lang-ledger")       (add-package 'ledger-mode))
   (when (capabilityp "lang-latex")        (add-package 'auctex))
   (when (capabilityp "lang-ocaml")        (add-package 'tuareg-mode 'utop))
-  (when (capabilityp "lang-nix")          (add-package 'nix-mode))
+  (when (capabilityp "lang-nix")          (add-package 'nix-mode
+                                                       ;; 'company-nixos-options
+                                                       ;; 'helm-nixos-options
+                                                       'nixos-options))
   (when (capabilityp "lang-purescript")   (add-package 'purescript-mode))
   (when (capabilityp "lang-rust")         (add-package 'rust-mode
                                                        'toml-mode
                                                        'rustfmt))
   (when (capabilityp "lang-idris")        (add-package 'prop-menu
                                                        'idris-mode))
-;;  (when (capabilityp "lang-elm")          (add-package 'elm-mode))
+  (when (capabilityp "lang-elm")          (add-package 'elm-mode))
   (when (capabilityp "lang-kframework")   (add-package 'k3-mode))
   (when (capabilityp "lang-chicken")      (add-package 'geiser))
   (when (capabilityp "lang-guile")        (add-package 'geiser))
@@ -367,9 +372,12 @@ If DISABLED is true, do nothing."
   "Check if el-get is installed, and, if not, install it."
   (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
 
-  ;; Add MELPA packages
+
+
+  ;; Set package databases
   (require 'package)
-  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  (setq package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
+                           ("melpa" . "https://melpa.milkbox.net/packages/")))
 
   ;; Install el-get if it isn't installed already
   (unless (require 'el-get nil t)
@@ -421,6 +429,8 @@ If DISABLED is true, do nothing."
     (require 'god-mode))
   (when (optionp 'flycheck)
     (require 'flycheck))
+  (when (optionp 'elfeed)
+    (require 'elfeed))
   (when (optionp 'rainbow-delimiters)
     (require 'rainbow-delimiters))
   (when (optionp 'smartparens)
@@ -446,6 +456,8 @@ If DISABLED is true, do nothing."
     (require 'comint))
   (when (optionp 'undo-tree)
     (require 'undo-tree))
+  (when (optionp 'material)
+    (require 'material-theme))
 
   (when (capabilityp "exec-haskell")
     (require 'haskell-mode)
@@ -453,7 +465,8 @@ If DISABLED is true, do nothing."
     (require 'haskell-simple-indent)
     (require 'hi2))
 
-  (when (capabilityp "exec-lilypond") (require 'lilypond-mode)))
+  ;;(when (capabilityp "exec-lilypond") (require 'lilypond-mode))
+)
 #+END_SRC
 ** Theming
 #+BEGIN_SRC emacs-lisp +n
@@ -508,7 +521,10 @@ If DISABLED is true, do nothing."
   (when (and (capabilityp "graphics") (optionp 'line-numbers))
     (add-hook 'term-mode-hook                  'linum-disable)
     (add-hook 'Info-mode-hook                  'linum-disable)
+    (add-hook 'custom-mode-hook                'linum-disable)
+    (add-hook 'help-mode-hook                  'linum-disable)
     (add-hook 'package-menu-mode-hook          'linum-disable)
+    (add-hook 'el-get-package-menu-mode-hook   'linum-disable)
     (when (optionp 'multi-term)
       (add-hook 'multi-term-mode-hook          'linum-disable))
     (when (capabilityp "exec-haskell")
@@ -516,7 +532,607 @@ If DISABLED is true, do nothing."
     (when (optionp 'speedbar)
       (add-hook 'speedbar-mode-hook            'linum-disable))
     (when (optionp 'sr-speedbar)
-      (add-hook 'sr-speedbar-mode-hook         'linum-disable)))
+      (add-hook 'sr-speedbar-mode-hook         'linum-disable))
+    (when (optionp 'elfeed)
+      (add-hook 'elfeed-show-mode-hook         'linum-disable)
+      (add-hook 'elfeed-search-mode-hook       'linum-disable)))
+
+
+;; (defmacro const (value)
+;;   '(lambda (x) value))
+
+;; (defun check-tls-configuration ()
+;;   "Check if the current TLS configuration is sane. Accesses the internet."
+;;   (let ((bad-hosts (loop for bad
+;;                          in `("https://wrong.host.badssl.com/"
+;;                               "https://self-signed.badssl.com/")
+;;                          if (condition-case e
+;;                                 (url-retrieve
+;;                                  bad (lambda (retrieved) t))
+;;                               (error nil))
+;;                          collect bad)))
+;;     (if bad-hosts
+;;         (error (format "tls misconfigured; retrieved %s ok" bad-hosts))
+;;       (url-retrieve "https://badssl.com" (lambda (x) t)))))
+
+;; Buffer-menu-mode
+;; ConTeXt-mode
+;; Custom-mode
+;; Info-edit-mode
+;; Info-mode
+;; LaTeX-mode
+;; LilyPond-mode
+;; LilyPond-quick-insert-mode
+;; TeX-doctex-mode
+;; TeX-fold-mode
+;; TeX-latex-mode
+;; TeX-mode
+;; TeX-plain-tex-mode
+;; TeX-tex-mode
+;; TeX-texinfo-mode
+;; Texinfo-mode
+;; abbrev-mode
+;; abnf-mode
+;; ace-isearch-mode
+;; ace-jump-char-mode
+;; ace-jump-line-mode
+;; ace-jump-mode
+;; ace-jump-word-mode
+;; ada-mode
+;; adjust-parens-mode
+;; allout-mode
+;; allout-widgets-mode
+;; ams-tex-mode
+;; antlr-mode
+;; array-mode
+;; artist-mode
+;; asm-mode
+;; auto-composition-mode
+;; auto-compression-mode
+;; auto-encryption-mode
+;; auto-fill-mode
+;; auto-image-file-mode
+;; auto-insert-mode
+;; auto-lower-mode
+;; auto-raise-mode
+;; auto-revert-mode
+;; auto-revert-tail-mode
+;; auto-save-mode
+;; autoarg-kp-mode
+;; autoarg-mode
+;; autoconf-mode
+;; awk-mode
+;; bat-mode
+;; bib-cite-minor-mode
+;; bibtex-mode
+;; bibtex-style-mode
+;; binary-overwrite-mode
+;; blink-cursor-mode
+;; bnf-mode
+;; bookmark-bmenu-mode
+;; bookmark-edit-annotation-mode
+;; bovine-grammar-mode
+;; buffer-face-mode
+;; bug-reference-mode
+;; bug-reference-prog-mode
+;; button-lock-mode
+;; c++-mode
+;; c-mode
+;; c-subword-mode
+;; calendar-mode
+;; capitalized-words-mode
+;; cfengine2-mode
+;; cfengine3-mode
+;; change-log-mode
+;; checkdoc-minor-mode
+;; column-number-mode
+;; comint-mode
+;; common-lisp-mode
+;; company-mode
+;; company-search-mode
+;; compilation-minor-mode
+;; compilation-mode
+;; compilation-shell-minor-mode
+;; completion-in-region-mode
+;; completion-list-mode
+;; conf-colon-mode
+;; conf-javaprop-mode
+;; conf-mode
+;; conf-ppd-mode
+;; conf-space-mode
+;; conf-unix-mode
+;; conf-windows-mode
+;; conf-xdefaults-mode
+;; context-en-mode
+;; context-mode
+;; context-nl-mode
+;; cperl-mode
+;; css-mode
+;; cua-mode
+;; cua-rectangle-mark-mode
+;; cua-selection-mode
+;; custom-mode
+;; customize-mode
+;; cvs-status-mode
+;; cwarn-mode
+;; dcl-mode
+;; decipher-mode
+;; delete-selection-mode
+;; delphi-mode
+;; describe-minor-mode
+;; describe-mode
+;; desktop-save-mode
+;; diary-mode
+;; diff-minor-mode
+;; diff-mode
+;; dired-hide-details-mode
+;; dired-isearch-filenames-mode
+;; dired-omit-mode
+;; dired-virtual-mode
+;; dirtrack-mode
+;; display-battery-mode
+;; display-time-mode
+;; dns-mode
+;; doc-view-minor-mode
+;; doc-view-mode
+;; docTeX-mode
+;; doctex-mode
+;; double-mode
+;; dsssl-mode
+;; dynamic-completion-mode
+;; ebrowse-member-mode
+;; ebrowse-tree-mode
+;; edebug-Continue-fast-mode
+;; edebug-Go-nonstop-mode
+;; edebug-Trace-fast-mode
+;; edebug-continue-mode
+;; edebug-eval-mode
+;; edebug-go-mode
+;; edebug-mode
+;; edebug-next-mode
+;; edebug-step-mode
+;; edebug-step-through-mode
+;; edebug-trace-mode
+;; edit-abbrevs-mode
+;; edmacro-mode
+;; eieio-custom-mode
+;; eldoc-mode
+;; electric-describe-mode
+;; electric-indent-local-mode
+;; electric-indent-mode
+;; electric-layout-mode
+;; electric-pair-mode
+;; elfeed-search-mode
+;; elfeed-show-mode
+;; emacs-lisp-byte-code-mode
+;; emacs-lisp-mode
+;; emacs-lock-mode
+;; enriched-mode
+;; epa-global-mail-mode
+;; epa-mail-mode
+;; erc-autojoin-mode
+;; erc-button-mode
+;; erc-capab-identify-mode
+;; erc-completion-mode
+;; erc-fill-mode
+;; erc-invite-only-mode
+;; erc-irccontrols-mode
+;; erc-keep-place-mode
+;; erc-list-menu-mode
+;; erc-list-mode
+;; erc-log-mode
+;; erc-match-mode
+;; erc-menu-mode
+;; erc-mode
+;; erc-move-to-prompt-mode
+;; erc-netsplit-mode
+;; erc-networks-mode
+;; erc-nickserv-identify-mode
+;; erc-noncommands-mode
+;; erc-notifications-mode
+;; erc-notify-mode
+;; erc-pcomplete-mode
+;; erc-readonly-mode
+;; erc-ring-mode
+;; erc-scrolltobottom-mode
+;; erc-services-mode
+;; erc-smiley-mode
+;; erc-spelling-mode
+;; erc-stamp-mode
+;; erc-timestamp-mode
+;; erc-toggle-channel-mode
+;; erc-track-minor-mode
+;; erc-track-mode
+;; erc-truncate-mode
+;; erc-unmorse-mode
+;; eshell-mode
+;; f90-mode
+;; fci-mode
+;; file-name-shadow-mode
+;; flycheck-color-mode-line-mode
+;; flycheck-error-list-mode
+;; flycheck-mode
+;; flymake-mode
+;; flyspell-mode
+;; flyspell-prog-mode
+;; follow-mode
+;; font-lock-mode
+;; footnote-mode
+;; forms-mode
+;; fortran-mode
+;; fringe-mode
+;; fundamental-mode
+;; gdb-script-mode
+;; geiser-mode
+;; generic-mode
+;; gfm-mode
+;; ghc-core-mode
+;; ghci-script-mode
+;; git-auto-commit-mode
+;; git-rebase-mode
+;; glasses-mode
+;; global-ace-isearch-mode
+;; global-auto-composition-mode
+;; global-auto-revert-mode
+;; global-button-lock-mode
+;; global-company-mode
+;; global-cwarn-mode
+;; global-ede-mode
+;; global-flycheck-mode
+;; global-font-lock-mode
+;; global-git-commit-mode
+;; global-hi-lock-mode
+;; global-highlight-changes-mode
+;; global-hl-line-mode
+;; global-linum-mode
+;; global-magit-file-mode
+;; global-prettify-symbols-mode
+;; global-reveal-mode
+;; global-subword-mode
+;; global-superword-mode
+;; global-visual-line-mode
+;; global-whitespace-mode
+;; global-whitespace-newline-mode
+;; global-wiki-nav-mode
+;; gmm-customize-mode
+;; gnus-mailing-list-mode
+;; gnus-score-mode
+;; god-local-mode
+;; god-mode
+;; goto-address-mode
+;; goto-address-prog-mode
+;; gpm-mouse-mode
+;; grails-mode
+;; grep-mode
+;; groovy-electric-mode
+;; groovy-mode
+;; gud-tooltip-mode
+;; haskell-cabal-mode
+;; haskell-compilation-mode
+;; haskell-decl-scan-mode
+;; haskell-doc-mode
+;; haskell-error-mode
+;; haskell-indent-mode
+;; haskell-indentation-mode
+;; haskell-interactive-mode
+;; haskell-mode
+;; haskell-mode-enable-process-minor-mode
+;; haskell-parent-mode
+;; haskell-presentation-mode
+;; haskell-simple-indent-mode
+;; helm--minor-mode
+;; helm--remap-mouse-mode
+;; helm-adaptative-mode
+;; helm-adaptive-mode
+;; helm-autoresize-mode
+;; helm-follow-mode
+;; helm-grep-mode
+;; helm-migemo-mode
+;; helm-moccur-mode
+;; helm-mode
+;; helm-multi-swoop-current-mode
+;; helm-push-mark-mode
+;; help-mode
+;; hexl-mode
+;; hi-lock-mode
+;; hi2-mode
+;; hide-ifdef-mode
+;; highlight-changes-mode
+;; highlight-changes-visible-mode
+;; highlight-uses-mode
+;; hl-line-mode
+;; hs-minor-mode
+;; html-mode
+;; ibuffer-auto-mode
+;; ibuffer-do-sort-by-major-mode
+;; ibuffer-filter-by-derived-mode
+;; ibuffer-filter-by-mode
+;; ibuffer-filter-by-used-mode
+;; ibuffer-interactive-filter-by-mode
+;; ibuffer-mark-by-mode
+;; ibuffer-mode
+;; ibuffer-mouse-filter-by-mode
+;; ibuffer-set-filter-groups-by-mode
+;; ibuffer-toggle-sorting-mode
+;; icomplete-mode
+;; icon-mode
+;; idl-mode
+;; idlwave-mode
+;; ido-mode
+;; idris-compiler-notes-mode
+;; idris-hole-list-mode
+;; idris-info-mode
+;; idris-ipkg-mode
+;; idris-log-mode
+;; idris-mode
+;; idris-prover-script-mode
+;; idris-repl-mode
+;; idris-simple-indent-mode
+;; idris-tree-info-mode
+;; iedit-describe-mode
+;; iedit-mode
+;; iedit-rectangle-mode
+;; iimage-mode
+;; image-dired-display-image-mode
+;; image-dired-thumbnail-mode
+;; image-minor-mode
+;; image-mode
+;; indent-according-to-mode
+;; indented-text-mode
+;; inf-haskell-mode
+;; inferior-groovy-mode
+;; interactive-haskell-mode
+;; isearch-describe-mode
+;; ispell-minor-mode
+;; iswitchb-mode
+;; japanese-latex-mode
+;; japanese-plain-tex-mode
+;; java-mode
+;; javascript-mode
+;; jit-lock-debug-mode
+;; js-mode
+;; k3-mode
+;; kotlin-mode
+;; latex-mode
+;; ld-script-mode
+;; ledger-mode
+;; line-number-mode
+;; linum-mode
+;; liquid-tip-mode
+;; lisp-interaction-mode
+;; lisp-mode
+;; literate-haskell-mode
+;; literate-purescript-mode
+;; log-view-mode
+;; m2-mode
+;; m4-mode
+;; magit-wip-after-apply-mode
+;; magit-wip-after-save-mode
+;; magit-wip-before-change-mode
+;; mail-abbrevs-mode
+;; mail-mode
+;; makefile-automake-mode
+;; makefile-bsdmake-mode
+;; makefile-gmake-mode
+;; makefile-imake-mode
+;; makefile-makepp-mode
+;; makefile-mode
+;; markdown-live-preview-mode
+;; markdown-mode
+;; master-mode
+;; menu-bar-mode
+;; mercury-mode
+;; message-mode
+;; messages-buffer-mode
+;; metafont-mode
+;; metapost-mode
+;; mh-folder-mode
+;; mime-edit-mode
+;; minibuffer-depth-indicate-mode
+;; minibuffer-electric-default-mode
+;; minibuffer-inactive-mode
+;; mixal-mode
+;; mml-mode
+;; modula-2-mode
+;; mouse-avoidance-mode
+;; mouse-wheel-mode
+;; msb-mode
+;; next-error-follow-minor-mode
+;; nix-mode
+;; normal-erase-is-backspace-mode
+;; normal-mode
+;; nroff-mode
+;; nxml-mode
+;; objc-mode
+;; occur-edit-mode
+;; occur-mode
+;; octave-mode
+;; opascal-mode
+;; org-beamer-mode
+;; org-bullets-mode
+;; org-cdlatex-mode
+;; org-indent-mode
+;; org-mode
+;; org-passwords-mode
+;; org-src-mode
+;; org-w3m-copy-for-org-mode
+;; orgstruct++-mode
+;; orgstruct-mode
+;; orgtbl-mode
+;; outline-minor-mode
+;; outline-mode
+;; overwrite-mode
+;; package-menu-mode
+;; paragraph-indent-minor-mode
+;; paragraph-indent-text-mode
+;; pascal-mode
+;; peg-mode
+;; pending-delete-mode
+;; perl-mode
+;; persp-mode
+;; picture-mode
+;; pike-mode
+;; plain-TeX-mode
+;; plain-tex-mode
+;; plstore-mode
+;; pm-debug-minor-mode
+;; pm-debug-mode
+;; poly-Rd-mode
+;; poly-brew+r-mode
+;; poly-c++r-mode
+;; poly-ess-help+r-mode
+;; poly-html+r-mode
+;; poly-markdown+r-mode
+;; poly-markdown-mode
+;; poly-noweb+r-mode
+;; poly-noweb-mode
+;; poly-org-mode
+;; poly-r+c++-mode
+;; poly-rapport-mode
+;; polymode-minor-mode
+;; pr-toggle-mode
+;; pr-txt-mode
+;; prettify-symbols-mode
+;; process-menu-mode
+;; prog-mode
+;; projectile-global-mode
+;; projectile-mode
+;; prolog-mode
+;; ps-mode
+;; purescript-decl-scan-mode
+;; purescript-indent-mode
+;; purescript-indentation-mode
+;; purescript-mode
+;; purescript-simple-indent-mode
+;; python-mode
+;; quickurl-list-mode
+;; rainbow-delimiters-mode
+;; rcirc-track-minor-mode
+;; read-only-mode
+;; recentf-mode
+;; rectangle-mark-mode
+;; refill-mode
+;; reftex-index-phrases-mode
+;; reftex-isearch-minor-mode
+;; reftex-mode
+;; reveal-mode
+;; rich-minority-mode
+;; rmail-mode
+;; rng-validate-mode
+;; rst-minor-mode
+;; rst-mode
+;; ruby-mode
+;; ruler-mode
+;; rust-mode
+;; savehist-mode
+;; scala-mode
+;; scheme-mode
+;; scroll-all-mode
+;; scroll-bar-mode
+;; scroll-lock-mode
+;; select-tags-table-mode
+;; semantic-mode
+;; server-mode
+;; ses-mode
+;; sgml-mode
+;; sh-mode
+;; shell-dirtrack-mode
+;; shell-mode
+;; shell-script-mode
+;; show-paren-mode
+;; show-smartparens-global-mode
+;; show-smartparens-mode
+;; sieve-mode
+;; simula-mode
+;; size-indication-mode
+;; slitex-mode
+;; smartparens-global-mode
+;; smartparens-global-strict-mode
+;; smartparens-mode
+;; smartparens-strict-mode
+;; smerge-mode
+;; snmp-mode
+;; snmpv2-mode
+;; special-mode
+;; speedbar-frame-mode
+;; sql-mode
+;; srecode-template-mode
+;; srt-mode
+;; strokes-mode
+;; subword-mode
+;; superword-mode
+;; t-mouse-mode
+;; table-fixed-width-mode
+;; tabulated-list-mode
+;; tags-table-mode
+;; tar-mode
+;; tcl-mode
+;; temp-buffer-resize-mode
+;; term-char-mode
+;; term-line-mode
+;; term-mode
+;; tex-fold-mode
+;; tex-mode
+;; texinfo-mode
+;; text-mode
+;; text-scale-mode
+;; textile-mode
+;; todo-archive-mode
+;; todo-filtered-items-mode
+;; todo-mode
+;; toggle-rot13-mode
+;; toggle-viper-mode
+;; toml-mode
+;; tool-bar-mode
+;; tooltip-mode
+;; transient-mark-mode
+;; tuareg-mode
+;; turn-off-fci-mode
+;; turn-off-geiser-mode
+;; turn-off-show-smartparens-mode
+;; turn-off-smartparens-mode
+;; turn-on-cwarn-mode
+;; turn-on-eldoc-mode
+;; turn-on-fci-mode
+;; turn-on-geiser-mode
+;; turn-on-gnus-dired-mode
+;; turn-on-haskell-doc-mode
+;; turn-on-iimage-mode
+;; turn-on-show-smartparens-mode
+;; turn-on-smartparens-mode
+;; turn-on-smartparens-strict-mode
+;; type-break-mode
+;; unify-8859-on-decoding-mode
+;; unify-8859-on-encoding-mode
+;; url-cookie-mode
+;; url-handler-mode
+;; utop-minor-mode
+;; utop-mode
+;; variable-pitch-mode
+;; vc-git-log-edit-mode
+;; vc-git-log-view-mode
+;; vera-mode
+;; verilog-mode
+;; vhdl-mode
+;; view-mode
+;; viper-mode
+;; visible-mode
+;; visual-line-mode
+;; wdired-change-to-wdired-mode
+;; which-func-mode
+;; which-function-mode
+;; whitespace-mode
+;; whitespace-newline-mode
+;; widget-minor-mode
+;; wiki-nav-mode
+;; winner-mode
+;; wisent-grammar-mode
+;; xml-mode
+;; xterm-mouse-mode
+;; yaml-mode
+;; zlc-mode
+;; zone-mode
+
 
   ;; Set fill-column-indicator to blue and enable in prog-mode
   (when (optionp 'fill-column-indicator)
@@ -547,7 +1163,11 @@ If DISABLED is true, do nothing."
   (when (optionp 'solarized-dark)
     (load-theme 'solarized-dark t))
 
-  ;; Thin cursor
+  ;; Enable material theme
+  (when (optionp 'material)
+    (load-theme 'material t))
+
+  ;; thin cursor
   (when (and (capabilityp "graphics") (optionp 'thin-cursor))
     (setq-default cursor-type 'bar))
 
@@ -588,7 +1208,13 @@ If DISABLED is true, do nothing."
   ;; Smarter editing with matching delimiters
   (when (optionp 'smartparens)
     (smartparens-global-mode)
-    (show-smartparens-global-mode))
+    (show-smartparens-global-mode)
+    (defun smartparens-add-texinfo-quotes-to-mode (mode)
+      "Add smartparens support for texinfo-style quoting inside
+       comments and strings in the given MODE."
+      (sp-local-pair mode "`" "'" 
+                     :when '(sp-in-string-p sp-in-comment-p)))
+    (smartparens-add-texinfo-quotes-to-mode 'c-mode))
 
   ;; On-the-fly syntax checking
   (when (optionp 'flycheck)
@@ -685,6 +1311,26 @@ If DISABLED is true, do nothing."
     ;; Fix C-z weirdness
     (global-unset-key (kbd "C-z"))
 
+    ;; Add C-j and C-S-j as temporary copy and paste
+    (defun copy-temporary ()
+      "Copy the selected text to the temporary copy-paste buffer."
+      (interactive)
+      (copy-to-register ?§ (region-beginning) (region-end)))
+     
+    (defun paste-temporary (start end)
+      "Paste the contents of the temporary copy-paste buffer."
+      (interactive "r")
+      (insert-register ?§ start end))
+     
+    (global-set-key (kbd "C-j")   #'copy-temporary)
+    (global-set-key (kbd "C-S-j") #'paste-temporary)
+
+    (defun activate-temporary-copy-keybindings ()
+      "Locally enable the keybindings for the temporary copy-paste buffer."
+      (interactive)
+      (local-set-key (kbd "C-j")   #'copy-temporary)
+      (local-set-key (kbd "C-S-j") #'paste-temporary))
+
     ;; Make C-x C-b a synonym for C-x b
     (global-set-key (kbd "C-x C-b") 'switch-to-buffer)
 
@@ -697,6 +1343,10 @@ If DISABLED is true, do nothing."
     (global-unset-key (kbd "C-<next>"))
     (global-set-key (kbd "C-<next>") 'scroll-down-command)
     (global-set-key (kbd "C-<prior>") 'scroll-up-command)
+
+    ;; Ctrl-Alt-Pg{Up,Down} move by ^L characters
+    (global-set-key (kbd "<C-M-prior>") 'backward-page)
+    (global-set-key (kbd "<C-M-next>") 'forward-page)   
 
     ;; Fix C-x C-k and C-x f not being the same as C-x k and C-x C-f respectively
     (global-set-key (kbd "C-x C-k") 'kill-buffer)
@@ -894,8 +1544,7 @@ when ace-isearch finishes."
       (kbd "C-c C-t")
       'haskell-mode-show-type-at)
     (require 'haskell-input-method)
-    (add-hook 'haskell-mode-hook 
-      (lambda () (set-input-method "haskell-unicode")))))
+    (add-hook 'haskell-mode-hook 'turn-on-hi2)))
 #+END_SRC
 ** Hook utility functions
 #+BEGIN_SRC emacs-lisp +n
@@ -916,6 +1565,16 @@ when ace-isearch finishes."
 (defun minibuffer-smartparens-mode ()
   "Run the function `smartparens-mode' in the minibuffer, during `eval-expression'."
   '(lambda () (when (eq this-command 'eval-expression) (smartparens-mode))))
+
+
+(defun add-hook:set-fc-language-standard (hook standard)
+  "Add HOOK setting the `flycheck-clang-language-standard' to STANDARD."
+  (add-hook hook `(lambda ()
+                    (interactive)
+                    (setq flycheck-clang-language-standard ,standard))))
+
+(add-hook:set-fc-language-standard 'c-mode-hook   "c11")
+(add-hook:set-fc-language-standard 'c++-mode-hook "c++14")
 
 (defun do-nothing ()
   "Do nothing, interactively."
@@ -964,6 +1623,8 @@ with the buffer in which this was run."
              (capabilityp "internet"))
     (add-hook 'wl-hook 'offlineimap))
   (add-hook 'java-mode-hook                (hook-select-flycheck-checker 'java-pmd))
+  (add-hook 'c-mode-hook                   (create-dtw-hook))
+  (add-hook 'c++-mode-hook                 (create-dtw-hook))
   (add-hook 'java-mode-hook                (create-dtw-hook))
   (add-hook 'lisp-mode-hook                (create-dtw-hook))
   (add-hook 'scheme-mode-hook              (create-dtw-hook))
@@ -980,8 +1641,6 @@ with the buffer in which this was run."
   "Return the ``tail'' of a STRING: all of the elements except the first."
   (apply #'string (cdr (string-to-list string))))
 
-;;(require 'elfeed)
-
 (cl-flet* ((kw-to-symbol (kw) (intern (string-tail (symbol-name kw))))
            (add-feed (url &rest tags)
                      (add-to-list 'elfeed-feeds
@@ -993,7 +1652,7 @@ with the buffer in which this was run."
             :blog :rational)
   (add-feed "https://lobste.rs/rss"
             :news :software)
-  (add-feed "https://:news.ycombinator.com/rss"
+  (add-feed "https://news.ycombinator.com/rss"
             :news :software)
   (add-feed "https://hackaday.com/:blog/feed"
             :news :hardware)
