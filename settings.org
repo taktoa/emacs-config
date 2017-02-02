@@ -228,7 +228,7 @@ If DISABLED is true, do nothing."
   (add-opt 'wanderlust-email      nil)
   (add-opt 'offlineimap           nil)
   (add-opt 'elfeed                nil)
-  
+
 
   ;; Window keybinds
   (add-opt 'meta-switch-windows   nil)
@@ -278,7 +278,8 @@ If DISABLED is true, do nothing."
                                                        'cedet-devel 'el-get 'let-alist
                                                        'tramp 'diminish 'delight
                                                        'session 'protobuf-mode
-                                                       'flycheck-protobuf))
+                                                       'flycheck-protobuf 'nlinum
+                                                       'popwin 'fic-mode))
 
   (when (optionp 'perspective)            (add-package 'perspective))
   (when (optionp 'projectile)             (add-package 'projectile))
@@ -317,8 +318,12 @@ If DISABLED is true, do nothing."
   (when (optionp 'powerline)              (add-package 'powerline))
   (when (optionp 'smart-mode-line)        (add-package 'smart-mode-line))
 
-  (when (optionp 'flx)                    (add-package 'flx 'flx-ido))
-  (when (optionp 'helm)                   (add-package 'helm))
+  (when (optionp 'flx)                    (add-package 'flx))
+  (when (optionp 'helm)                   (add-package 'helm
+                                                       'helm-gtags
+                                                       ;;'helm-flx
+                                                       ;;'helm-fuzzier
+                                                       ))
   (when (optionp 'smex)                   (add-package 'smex))
   (when (optionp 'company)                (add-package 'company-mode))
   (when (optionp 'god-mode)               (add-package 'god-mode))
@@ -330,14 +335,15 @@ If DISABLED is true, do nothing."
                                                        'ghc-mod
                                                        'hi2
                                                        'liquid-types
-                                                       'haskell-input-method))
+                                                       'haskell-input-method
+                                                       'keep-formation))
   (when (capabilityp "vcs-git")           (add-package 'magit))
   (when (capabilityp "lang-ledger")       (add-package 'ledger-mode))
   (when (capabilityp "lang-latex")        (add-package 'auctex))
   (when (capabilityp "lang-ocaml")        (add-package 'tuareg-mode 'utop))
   (when (capabilityp "lang-nix")          (add-package 'nix-mode
-                                                       ;; 'company-nixos-options
-                                                       ;; 'helm-nixos-options
+                                                       ;;'company-nixos-options
+                                                       ;;'helm-nixos-options
                                                        'nixos-options))
   (when (capabilityp "lang-purescript")   (add-package 'purescript-mode))
   (when (capabilityp "lang-rust")         (add-package 'rust-mode
@@ -399,7 +405,9 @@ If DISABLED is true, do nothing."
 (defun init-sync-packages ()
   "Make the installed packages consistent with the contents of `my-packages'."
   (el-get 'sync my-packages)
-  (el-get-cleanup my-packages))
+  (el-get-cleanup my-packages)
+
+  (package-initialize))
 
 (defun init-update-packages ()
   "Update all packages."
@@ -410,9 +418,14 @@ If DISABLED is true, do nothing."
 (defun init-require-modules ()
   "Require necessary modules for init.el."
   (require 'term)
+  (require 'popwin)
   (when (optionp 'helm)
     (require 'helm)
-    (require 'helm-config))
+    (require 'helm-config)
+    (helm-mode 1)
+    ;;(helm-flx-mode 1)
+    ;;(helm-fuzzier-mode 1)
+    )
   (when (optionp 'erc)
     (require 'erc))
   (when (optionp 'extras)
@@ -507,15 +520,13 @@ If DISABLED is true, do nothing."
 
   ;; Line numbers
   (when (and (capabilityp "graphics") (optionp 'line-numbers))
-    (line-number-mode 1)
-    ;; (global-hl-line-mode)
-    (global-linum-mode 1)
-    (setq-default linum-format "%4d \u2502"))
+    ;;(global-nlinum-mode 1)
+    (setq-default nlinum-format "%4d \u2502"))
 
   (defun linum-disable ()
     "Disable line numbers"
     (interactive)
-    (linum-mode -1))
+    (nlinum-mode -1))
 
   ;; Disable line numbers for various modes
   (when (and (capabilityp "graphics") (optionp 'line-numbers))
@@ -1136,6 +1147,7 @@ If DISABLED is true, do nothing."
 
   ;; Set fill-column-indicator to blue and enable in prog-mode
   (when (optionp 'fill-column-indicator)
+    (setq-default fci-rule-color "lightblue")
     (add-hook 'prog-mode-hook (lambda ()
                                 (interactive)
                                 (defvar fci-rule-color)
@@ -1212,7 +1224,7 @@ If DISABLED is true, do nothing."
     (defun smartparens-add-texinfo-quotes-to-mode (mode)
       "Add smartparens support for texinfo-style quoting inside
        comments and strings in the given MODE."
-      (sp-local-pair mode "`" "'" 
+      (sp-local-pair mode "`" "'"
                      :when '(sp-in-string-p sp-in-comment-p)))
     (smartparens-add-texinfo-quotes-to-mode 'c-mode))
 
@@ -1224,7 +1236,7 @@ If DISABLED is true, do nothing."
   (when (optionp 'perspective)
     (persp-mode 1)
     (persp-turn-on-modestring)
-    ;; (global-set-key (kbd "C-x b") 
+    ;; (global-set-key (kbd "C-x b")
     ;;                 #'(lambda (arg)
     ;;                     (interactive "P")
     ;;                     (with-persp-buffer-list () (ibuffer arg))))
@@ -1281,7 +1293,10 @@ If DISABLED is true, do nothing."
   ;; Enable malabar-mode
   (when (and (capabilitiesp '("exec-jdk" "exec-groovy" "exec-gradle"))
              (optionp 'malabar))
-    (add-hook 'after-init-hook 'activate-malabar-mode)))
+    (add-hook 'after-init-hook 'activate-malabar-mode))
+
+  ;; Enable use of popwin
+  (when (optionp 'extras) (popwin-mode 1)))
 #+END_SRC
 ** Keybindings
 #+BEGIN_SRC emacs-lisp +n
@@ -1316,12 +1331,12 @@ If DISABLED is true, do nothing."
       "Copy the selected text to the temporary copy-paste buffer."
       (interactive)
       (copy-to-register ?§ (region-beginning) (region-end)))
-     
+
     (defun paste-temporary (start end)
       "Paste the contents of the temporary copy-paste buffer."
       (interactive "r")
       (insert-register ?§ start end))
-     
+
     (global-set-key (kbd "C-j")   #'copy-temporary)
     (global-set-key (kbd "C-S-j") #'paste-temporary)
 
@@ -1331,8 +1346,11 @@ If DISABLED is true, do nothing."
       (local-set-key (kbd "C-j")   #'copy-temporary)
       (local-set-key (kbd "C-S-j") #'paste-temporary))
 
+    ;; Enable helm for C-x b
+    (global-set-key (kbd "C-x b") 'helm-buffers-list)
+
     ;; Make C-x C-b a synonym for C-x b
-    (global-set-key (kbd "C-x C-b") 'switch-to-buffer)
+    (global-set-key (kbd "C-x C-b") 'helm-buffers-list)
 
     ;; Add lambda key
     (global-set-key (kbd "C-|") (lambda ()
@@ -1346,15 +1364,95 @@ If DISABLED is true, do nothing."
 
     ;; Ctrl-Alt-Pg{Up,Down} move by ^L characters
     (global-set-key (kbd "<C-M-prior>") 'backward-page)
-    (global-set-key (kbd "<C-M-next>") 'forward-page)   
+    (global-set-key (kbd "<C-M-next>") 'forward-page)
 
     ;; Fix C-x C-k and C-x f not being the same as C-x k and C-x C-f respectively
-    (global-set-key (kbd "C-x C-k") 'kill-buffer)
-    (global-set-key (kbd "C-x f") 'find-file)
+    (global-set-key (kbd "C-x C-k")   'kill-buffer)
+    (global-set-key (kbd "C-F")       'find-file)
+    (global-set-key (kbd "C-M-F")     'helm-find-files)
+    (global-set-key (kbd "C-x f")     'helm-find-files)
+    (global-set-key (kbd "C-x C-f")   'helm-find-files)
+    (global-set-key (kbd "C-x C-S-f") 'helm-recentf)
 
-    ;; Useful shortcuts for compile
-    (global-set-key (kbd "<f5>") 'compile)
-    (global-set-key (kbd "<f6>") 'recompile)
+    ;; Fix keybindings in helm-find-files
+
+    (defun dwim-helm-find-files-up-one-level-maybe ()
+      (interactive)
+      (if (looking-back "/" 1)
+          (call-interactively 'helm-find-files-up-one-level)
+        (delete-backward-char 1)))
+
+    (define-key helm-read-file-map  (kbd "<backspace>") 'dwim-helm-find-files-up-one-level-maybe)
+    (define-key helm-read-file-map  (kbd "DEL")         'dwim-helm-find-files-up-one-level-maybe)
+    (define-key helm-find-files-map (kbd "<backspace>") 'dwim-helm-find-files-up-one-level-maybe)
+    (define-key helm-find-files-map (kbd "DEL")         'dwim-helm-find-files-up-one-level-maybe)
+
+    (defun dwim-helm-find-files-navigate-forward (orig-fun &rest args)
+      "Adjust how helm-execute-persistent actions behaves, depending on context"
+      (if (file-directory-p (helm-get-selection))
+          (apply orig-fun args)
+        (helm-maybe-exit-minibuffer)))
+
+    (define-key helm-map (kbd "<return>") 'helm-maybe-exit-minibuffer)
+    (define-key helm-map (kbd "RET")      'helm-maybe-exit-minibuffer)
+    (define-key helm-find-files-map (kbd "<return>") 'helm-execute-persistent-action)
+    (define-key helm-read-file-map  (kbd "<return>") 'helm-execute-persistent-action)
+    (define-key helm-find-files-map (kbd "<tab>")    'helm-execute-persistent-action)
+    (define-key helm-read-file-map  (kbd "<tab>")    'helm-execute-persistent-action)
+    (define-key helm-find-files-map (kbd "RET")      'helm-execute-persistent-action)
+    (define-key helm-read-file-map  (kbd "RET")      'helm-execute-persistent-action)
+
+    (advice-add 'helm-execute-persistent-action :around #'dwim-helm-find-files-navigate-forward)
+
+    (with-eval-after-load 'helm-files
+      (advice-add 'helm-ff-filter-candidate-one-by-one
+                  :before-while 'no-dots-display-file-p))
+
+    (defvar no-dots-whitelist nil
+      "List of helm buffers in which to show dots.")
+
+    (defun no-dots-in-white-listed-helm-buffer-p ()
+      (member helm-buffer no-dots-whitelist))
+
+    (defun no-dots-display-file-p (file)
+      ;; in a whitelisted buffer display the file regardless of its name
+      (or (no-dots-in-white-listed-helm-buffer-p)
+          ;; not in a whitelisted buffer display all files
+          ;; which does not end with /. /..
+          (not (string-match "\\(?:/\\|\\`\\)\\.\\{1,2\\}\\'" file))))
+
+    ;; Globally enable recentf-mode
+    (recentf-mode)
+
+    ;; Shortcuts for rtags
+    (load "rtags/rtags.el")
+    (load "rtags/company-rtags.el")
+    (load "rtags/flycheck-rtags.el")
+    (require 'cc-mode)
+    (define-key c-mode-map   (kbd "M-.") 'rtags-find-symbol)
+    (define-key c++-mode-map (kbd "M-.") 'rtags-find-symbol)
+    (define-key c-mode-map   (kbd "M-=") 'rtags-symbol-type)
+    (define-key c++-mode-map (kbd "M-=") 'rtags-symbol-type)
+
+    ;; Shortcut for helm-swoop
+    (global-set-key (kbd "C-r") 'helm-swoop)
+    (global-set-key (kbd "C-s") 'helm-swoop)
+    (define-key isearch-mode-map     (kbd "M-i") 'helm-swoop-from-isearch)
+    (define-key helm-swoop-map       (kbd "C-r") 'helm-previous-line)
+    (define-key helm-swoop-map       (kbd "C-s") 'helm-next-line)
+    (define-key helm-multi-swoop-map (kbd "C-r") 'helm-previous-line)
+    (define-key helm-multi-swoop-map (kbd "C-s") 'helm-next-line)
+    (define-key helm-swoop-map       (kbd "C-g") 'helm-maybe-exit-minibuffer)
+    (define-key helm-multi-swoop-map (kbd "C-g") 'helm-maybe-exit-minibuffer)
+    (setq helm-swoop-pre-input-function (lambda () ""))
+    (setq helm-swoop-split-with-multiple-windows t)
+
+    ;; Enable fuzzy matching for all helm stuff
+    (setq helm-mode-fuzzy-match t)
+    (setq helm-swoop-use-fuzzy-match t)
+
+    ;; Enable helm-autoresize-mode
+    (helm-autoresize-mode 1)
 
     ;; Shortcut for goto-line
     (global-set-key (kbd "M-g") 'goto-line)
@@ -1379,7 +1477,7 @@ If DISABLED is true, do nothing."
     (add-hook 'god-mode-disabled-hook 'god-update-cursor)
     (when (optionp 'ace-isearch)
       (defun god-ace-isearch ()
-        "Pause god-local-mode, start ace-isearch, and resume god-local mode 
+        "Pause god-local-mode, start ace-isearch, and resume god-local mode
 when ace-isearch finishes."
         (interactive)
         (god-local-mode-pause)
@@ -1417,8 +1515,8 @@ when ace-isearch finishes."
   (when (optionp 'super-resize-windows)
     (global-set-key (kbd "s-<left>")  'shrink-window-horizontally)
     (global-set-key (kbd "s-<right>") 'enlarge-window-horizontally)
-    (global-set-key (kbd "s-<down>")  'shrink-window)
-    (global-set-key (kbd "s-<up>")    'enlarge-window))
+    (global-set-key (kbd "s-<down>")  'enlarge-window)
+    (global-set-key (kbd "s-<up>")    'shrink-window))
 
   ;; Switch windows with meta + arrow keys
   (when (optionp 'meta-switch-windows)
@@ -1544,7 +1642,8 @@ when ace-isearch finishes."
       (kbd "C-c C-t")
       'haskell-mode-show-type-at)
     (require 'haskell-input-method)
-    (add-hook 'haskell-mode-hook 'turn-on-hi2)))
+    (add-hook 'haskell-mode-hook 'turn-on-hi2)
+    (add-hook 'haskell-mode-hook 'keep-formation-mode)))
 #+END_SRC
 ** Hook utility functions
 #+BEGIN_SRC emacs-lisp +n
