@@ -227,7 +227,7 @@ If DISABLED is true, do nothing."
   ;; Email
   (add-opt 'wanderlust-email      nil)
   (add-opt 'offlineimap           nil)
-  (add-opt 'elfeed                nil)
+  (add-opt 'elfeed                t)
 
 
   ;; Window keybinds
@@ -331,8 +331,7 @@ If DISABLED is true, do nothing."
 
   (when (capabilityp "lang-haskell")      (add-package 'haskell-mode
                                                        'flycheck-haskell
-                                                       'company-ghc
-                                                       'ghc-mod
+                                                       'flycheck-hdevtools
                                                        'hi2
                                                        'liquid-types
                                                        'haskell-input-method
@@ -348,7 +347,10 @@ If DISABLED is true, do nothing."
   (when (capabilityp "lang-purescript")   (add-package 'purescript-mode))
   (when (capabilityp "lang-rust")         (add-package 'rust-mode
                                                        'toml-mode
-                                                       'rustfmt))
+                                                       'rustfmt
+                                                       ;;'rust-racer
+                                                       'emacs-racer
+                                                       'company-racer))
   (when (capabilityp "lang-idris")        (add-package 'prop-menu
                                                        'idris-mode))
   (when (capabilityp "lang-elm")          (add-package 'elm-mode))
@@ -362,8 +364,8 @@ If DISABLED is true, do nothing."
                                                        'ceylon-mode
                                                        'kotlin-mode
                                                        'groovy-mode
-                                                       'javadoc-help
-                                                       'javadoc-lookup
+                                                       ;; 'javadoc-help
+                                                       ;; 'javadoc-lookup
                                                        'javaimp))
   (when (and (capabilitiesp '("lang-java" "lang-groovy" "build-gradle"))
              (optionp 'malabar))          (add-package 'malabar-mode))
@@ -419,6 +421,7 @@ If DISABLED is true, do nothing."
   "Require necessary modules for init.el."
   (require 'term)
   (require 'popwin)
+  (require 'nix-mode)
   (when (optionp 'helm)
     (require 'helm)
     (require 'helm-config)
@@ -442,8 +445,8 @@ If DISABLED is true, do nothing."
     (require 'god-mode))
   (when (optionp 'flycheck)
     (require 'flycheck))
-  (when (optionp 'elfeed)
-    (require 'elfeed))
+  ;;(when (optionp 'elfeed)
+  ;;  (require 'elfeed))
   (when (optionp 'rainbow-delimiters)
     (require 'rainbow-delimiters))
   (when (optionp 'smartparens)
@@ -476,7 +479,9 @@ If DISABLED is true, do nothing."
     (require 'haskell-mode)
     (require 'haskell-interactive-mode)
     (require 'haskell-simple-indent)
-    (require 'hi2))
+    (require 'hi2)
+
+  (require 'ottmode))
 
   ;;(when (capabilityp "exec-lilypond") (require 'lilypond-mode))
 )
@@ -526,7 +531,8 @@ If DISABLED is true, do nothing."
   (defun linum-disable ()
     "Disable line numbers"
     (interactive)
-    (nlinum-mode -1))
+    nil)
+    ;; (nlinum-mode -1))
 
   ;; Disable line numbers for various modes
   (when (and (capabilityp "graphics") (optionp 'line-numbers))
@@ -1226,7 +1232,9 @@ If DISABLED is true, do nothing."
        comments and strings in the given MODE."
       (sp-local-pair mode "`" "'"
                      :when '(sp-in-string-p sp-in-comment-p)))
-    (smartparens-add-texinfo-quotes-to-mode 'c-mode))
+    (smartparens-add-texinfo-quotes-to-mode 'c-mode)
+    (sp-local-pair 'haskell-c2hs-mode "`" "'")
+    (sp-local-pair 'ott-mode "⟨" "⟩"))
 
   ;; On-the-fly syntax checking
   (when (optionp 'flycheck)
@@ -1296,7 +1304,10 @@ If DISABLED is true, do nothing."
     (add-hook 'after-init-hook 'activate-malabar-mode))
 
   ;; Enable use of popwin
-  (when (optionp 'extras) (popwin-mode 1)))
+  (when (optionp 'extras) (popwin-mode 1))
+
+  ;; Enable wakatime
+  (global-wakatime-mode))
 #+END_SRC
 ** Keybindings
 #+BEGIN_SRC emacs-lisp +n
@@ -1732,7 +1743,8 @@ with the buffer in which this was run."
   (add-hook 'prog-mode-hook                'rainbow-delimiters-mode)
   (add-hook 'haskell-mode-hook             'turn-on-hi2)
   (add-hook 'haskell-mode-hook             'interactive-haskell-mode)
-  (add-hook 'flycheck-mode-hook            'flycheck-haskell-setup))
+  ;;(add-hook 'flycheck-mode-hook            'flycheck-haskell-setup)
+)
 #+END_SRC
 ** Miscellaneous
 #+BEGIN_SRC emacs-lisp +n
@@ -1833,6 +1845,9 @@ with the buffer in which this was run."
     ;; Use Kotlin in *.kt files
     (add-to-list 'auto-mode-alist '("\\.kt\\'" . kotlin-mode))
 
+    ;; Use JS2 in *.js files
+    (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+
     ;; Autosave into ~/.emacs.d/backups
     (setq backup-directory-alist
           `(("." . ,(expand-file-name "~/.emacs.d/backups"))))
@@ -1844,6 +1859,21 @@ with the buffer in which this was run."
                                     (user-uid)))
     (setq auto-save-file-name-transforms `((".*" ,emacs-tmp-dir t)))
     (setq auto-save-list-file-prefix emacs-tmp-dir)
+
+    ;; Unbind the <menu> button
+    (global-unset-key (kbd "<menu>"))
+
+    ;; Set the label of the emacs X11 window to be the filename
+    ;; of the currently-open buffer.
+    (setq-default
+     frame-title-format
+     '(:eval
+       (format
+        "%s %s"
+        (buffer-name)
+        (cond (buffer-file-truename (concat "(" buffer-file-truename ")"))
+              (dired-directory      (concat "{" dired-directory "}"))
+              (t                    "[no file]")))))
 
     ;; Enable the upcase-region command
     (put 'upcase-region 'disabled nil)))

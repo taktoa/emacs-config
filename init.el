@@ -59,6 +59,8 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
 ;; Set it back to the default value
 (reset-gc-max-size)
 
+(setq with-editor-file-name-history-exclude 1)
+
 ;; -----------------------------------------------------------------------------
 
 (custom-set-variables
@@ -84,7 +86,6 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
  '(el-get-allow-insecure t)
  '(el-get-fossil-dir nil)
  '(el-get-status-file "/home/remy/.emacs.d/el-get/status.el")
- '(elfeed-db-directory "~/.cache/emacs/elfeed")
  '(elm-indent-after-keywords
    (quote
     (("of" 2)
@@ -95,24 +96,26 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
  '(elmo-msgdb-directory "~/.cache/emacs/elmo")
  '(epa-file-cache-passphrase-for-symmetric-encryption t)
  '(fci-rule-color "#383838")
- '(flycheck-checkers
-   (quote
-    (rtags idris ada-gnat asciidoc c/c++-clang c/c++-gcc c/c++-cppcheck cfengine chef-foodcritic coffee coffee-coffeelint coq css-csslint d-dmd emacs-lisp emacs-lisp-checkdoc erlang eruby-erubis fortran-gfortran go-gofmt go-golint go-vet go-build go-test go-errcheck groovy haml handlebars haskell-ghc haskell-hlint html-tidy jade javascript-eslint javascript-jshint javascript-gjslint javascript-jscs javascript-standard json-jsonlint json-python-json less luacheck lua perl perl-perlcritic php php-phpmd php-phpcs processing puppet-parser puppet-lint python-flake8 python-pylint python-pycompile r-lintr racket rpm-rpmlint rst-sphinx rst ruby-rubocop ruby-rubylint ruby ruby-jruby rust-cargo rust sass scala scala-scalastyle scss-lint scss sh-bash sh-posix-dash sh-posix-bash sh-zsh sh-shellcheck slim sql-sqlint tex-chktex tex-lacheck texinfo verilog-verilator xml-xmlstarlet xml-xmllint yaml-jsyaml yaml-ruby)))
  '(flycheck-clang-blocks t)
  '(flycheck-clang-language-standard "c++14")
  '(flycheck-cppcheck-checks (quote ("style")))
  '(flycheck-elm-executable "elm make")
+ '(flycheck-haskell-runghc-command (quote ("runghc")))
  '(flycheck-pmd-rulesets
    (quote
     ("java-basic" "java-design" "java-imports" "java-braces" "java-unusedcode" "java-naming" "java-optimizations" "java-unnecessary" "java-sunsecure" "java-clone" "java-codesize" "java-comments" "java-coupling" "java-typeresolution" "java-strictexception" "java-strings" "java-empty" "java-junit")))
  '(flycheck-sh-shellcheck-executable nil)
  '(font-latex-fontify-script nil)
+ '(font-latex-math-environments
+   (quote
+    ("display" "displaymath" "equation" "eqnarray" "gather" "math" "multline" "align" "alignat" "xalignat" "xxalignat" "flalign" "answereq" "answereq*")))
  '(gac-automatically-push-p t)
  '(geiser-guile-extra-keywords
    (quote
     ("lambda\\*" "λ\\*" "case-lambda" "define~" "define-inlinable" "syntax-case")))
  '(geiser-guile-load-init-file-p t)
  '(geiser-mode-smart-tab-p t)
+ '(global-wakatime-mode t)
  '(haskell-complete-module-preferred
    (quote
     ("Data.ByteString" "Data.ByteString.Lazy" "Data.Conduit" "Data.Function" "Data.List" "Data.Map" "Data.Maybe" "Data.Monoid" "Data.Ord")))
@@ -163,14 +166,39 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
  '(org-support-shift-select (quote always))
  '(package-selected-packages
    (quote
-    (company-flow flycheck-flow gitattributes-mode gitconfig-mode gitignore-mode maude-mode boogie-friends rtags z3-mode thrift rustfmt nlinum nixos-options material-theme jq-mode javaimp help-fns+ helm-fuzzier helm-flx flycheck-ghcmod flycheck-clangcheck flycheck-ats2 delight cmake-font-lock adjust-parens)))
+    (twittering-mode racer company-ghc flycheck-mypy cask-mode flycheck-cask shut-up buttercup company-racer xah-math-input lsp-haskell less-css-mode qml-mode flycheck-liquidhs liquid-types wakatime-mode clojure-mode undo-tree magithub graphviz-dot-mode company-flow flycheck-flow gitattributes-mode gitconfig-mode gitignore-mode maude-mode boogie-friends rtags z3-mode thrift rustfmt nlinum nixos-options material-theme jq-mode javaimp help-fns+ helm-fuzzier helm-flx flycheck-ghcmod flycheck-clangcheck flycheck-ats2 delight cmake-font-lock adjust-parens)))
  '(purescript-mode-hook
    (quote
     (turn-on-eldoc-mode turn-on-purescript-indent turn-on-purescript-indentation turn-on-purescript-unicode-input-method)))
  '(python-shell-interpreter "python3")
  '(safe-local-variable-values
    (quote
-    ((eval progn
+    ((eval c-set-offset
+           (quote access-label)
+           (quote -))
+     (eval c-set-offset
+           (quote substatement-open)
+           0)
+     (eval c-set-offset
+           (quote arglist-cont-nonempty)
+           (quote +))
+     (eval c-set-offset
+           (quote arglist-cont)
+           0)
+     (eval c-set-offset
+           (quote arglist-intro)
+           (quote +))
+     (eval c-set-offset
+           (quote inline-open)
+           0)
+     (eval c-set-offset
+           (quote defun-open)
+           0)
+     (eval c-set-offset
+           (quote innamespace)
+           0)
+     (indicate-empty-lines . t)
+     (eval progn
            (git-auto-commit-mode 1)
            (fci-mode 1))
      (eval delete-trailing-whitespace))))
@@ -249,6 +277,19 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
  '(tags-revert-without-query t)
  '(tex-fontify-script nil)
  '(tls-checktrust t)
+ '(tooltip-delay 3)
+ '(tooltip-hide-delay 2)
+ '(twittering-status-format
+   "%RT{%FACE[bold]{RT}}%i %s,  %@:
+%FOLD[  ]{%T
+| %r%RT{(retweeted by %s)}%QT{
++----
+%FOLD[|]{%i %s,  %@:
+%FOLD[  ]{%T
+| %r%RT{(retweeted by %s)}}}
++----}}
+ ")
+ '(twittering-use-master-password t)
  '(vc-annotate-background "#2B2B2B")
  '(vc-annotate-color-map
    (quote
@@ -276,6 +317,8 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
  '(verilog-indent-level-declaration 2)
  '(verilog-indent-level-directive 2)
  '(verilog-indent-level-module 2)
+ '(wakatime-cli-path "/home/remy/.nix-profile/bin/wakatime")
+ '(wakatime-python-bin "bash")
  '(warning-suppress-types (quote ((\(undo\ discard-info\)))))
  '(wl-address-file "~/.emacs.d/wl/addresses")
  '(wl-alias-file "~/.emacs.d/wl/aliases")
@@ -289,11 +332,24 @@ a value that is too small.  If a negative SIZE is given, nothing happens."
  '(wl-smtp-connection-type (quote starttls))
  '(wl-smtp-posting-port 587)
  '(wl-temporary-file-directory "~/.cache/emacs/wl/tmp")
- '(x-gtk-use-system-tooltips nil))
+ '(x-gtk-use-system-tooltips t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(agda2-highlight-catchall-clause-face ((t (:background "dim gray"))))
+ '(agda2-highlight-coverage-problem-face ((t (:underline (:color "#ffe7ba" :style wave)))))
+ '(agda2-highlight-error-face ((t (:background "#3F3F3F" :foreground "#FF8888" :underline (:color "red" :style wave)))))
+ '(agda2-highlight-field-face ((t (:foreground "#EEC591"))))
+ '(agda2-highlight-number-face ((t (:foreground "#AA88FF"))))
+ '(agda2-highlight-positivity-problem-face ((t (:background "#aa0000"))))
+ '(agda2-highlight-postulate-face ((t (:foreground "#00BBFF"))))
+ '(agda2-highlight-primitive-face ((t (:foreground "dodger blue"))))
+ '(agda2-highlight-reachability-problem-face ((t (:underline (:color "#00FFFF" :style wave)))))
+ '(agda2-highlight-record-face ((t (:foreground "light blue"))))
+ '(agda2-highlight-termination-problem-face ((t (:background "#3F3F3F" :foreground "#FF8844" :underline (:color "red" :style wave)))))
+ '(agda2-highlight-unsolved-constraint-face ((t (:background "#3F3F3F" :foreground "#FF4488" :underline (:color "red" :style wave)))))
+ '(agda2-highlight-unsolved-meta-face ((t (:background "#3F3F3F" :foreground "#FF4444" :underline (:color "red" :style wave)))))
  '(persp-selected-face ((t (:inherit sml/filename :foreground "blue")))))
 (put 'downcase-region 'disabled nil)
